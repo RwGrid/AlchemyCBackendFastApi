@@ -1,0 +1,5 @@
+The Main.py will contain the url pages belongs to 'Aside,ProtectedLayout' and anything that belongs to the main page of the app
+and not one of the pages specific to the aside items
+The routers here are defined according to the pages in the ui
+EACH router correspond to the page in the ui
+not the uniformity of the Model itself

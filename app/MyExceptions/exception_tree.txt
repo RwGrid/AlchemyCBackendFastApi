@@ -1,0 +1,4 @@
+https://docs.python.org/3/library/exceptions.html#exception-hierarchy
+
+
+https://medium.com/analytics-vidhya/6-exceptionally-common-pitfalls-of-python-exception-handling-44871d6afbc7

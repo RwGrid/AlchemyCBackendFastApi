@@ -1,0 +1,8 @@
+uvicorn.error - INFO - Started server process [6240]
+uvicorn.error - INFO - Waiting for application startup.
+uvicorn.error - INFO - Application startup complete.
+uvicorn.error - INFO - Shutting down
+uvicorn.error - INFO - Waiting for application shutdown.
+root - WARNING - Ended Logging
+uvicorn.error - INFO - Application shutdown complete.
+uvicorn.error - INFO - Finished server process [6240]

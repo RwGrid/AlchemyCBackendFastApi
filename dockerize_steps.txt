@@ -1,0 +1,4 @@
+0- pip list --format=freeze > requirements.txt
+# remove importlib from requirements.txt
+1- sudo docker build . -t alchemyc
+2-  sudo docker-compose up -d
