@@ -1,1 +1,1 @@
-{"postgre_user":"postgres","postgre_pass":"postgres_ali","postgre_host": "192.168.0.70","postgre_port": "5446"}
+{"postgre_user":"postgres","postgre_pass":"postgres_ali","postgre_host": "127.0.0.1","postgre_port": "5446"}

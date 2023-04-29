@@ -29,7 +29,7 @@ class ElasticSearchSingelton:
                 ELASTIC_CONFIG["elastic_username"],
                 ELASTIC_CONFIG["elastic_password"],
             ),
-            verify_certs=True,
+            verify_certs=False,
             ca_certs="ca.crt",
-        )
+        )#https://github.com/elastic/elasticsearch-py/issues/712
         return es

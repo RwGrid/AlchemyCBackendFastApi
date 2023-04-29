@@ -59,11 +59,12 @@ try:
 except Exception as ex:
     print(str(ex))
 # ----------------------------------
-# import os
-# print("inserting common data into databases")
+import os
+print("inserting common data into databases")
 # try:
 #     cmd = "python3 /home/ali/Desktop/ExtractJsonObjFromExcel/run_all.py"
 #     asdf = os.system(cmd)
+#     print("inserted base data")
 # except Exception as exxz:
 #     pass
 
@@ -116,26 +117,26 @@ ORIGINS_LIST = [
     "http://localhost:3000",
     "http://localhost:3000/users",
     "http://127.0.0.1:3000",
-    "http://192.168.0.70:3000",
-    "https://192.168.0.70:3000",
-    "http://192.168.0.70:81",
-    "https://192.168.0.70:81",
-    "https://192.168.0.70:80",
-    "https://192.168.0.70:80/",
-    "https://192.168.0.70:80/login",
-    "https://192.168.0.70:80/users",
+    "http://127.0.0.1:3000",
+    "https://127.0.0.1:3000",
+    "http://127.0.0.1:81",
+    "https://127.0.0.1:81",
+    "https://127.0.0.1:80",
+    "https://127.0.0.1:80/",
+    "https://127.0.0.1:80/login",
+    "https://127.0.0.1:80/users",
     "http://192.168.10.118",
     "https://192.168.10.118",
     "https://192.168.10.254",
     "http://192.168.10.254",
     "http://192.168.10.254/login" "https://localhost:81",
-    "https://192.168.0.70:81",
-    "https://192.168.0.70:81/",
+    "https://127.0.0.1:81",
+    "https://127.0.0.1:81/",
     "https://140.125.1.91:81",
     "https://140.125.1.91:81/",
     "https://140.125.1.91:80",
     "https://140.125.1.91:80/",
-    "https://192.168.0.70:81/users",
+    "https://127.0.0.1:81/users",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -149,7 +150,7 @@ app.add_middleware(
 
 apm_config = {
     "SERVICE_NAME": "alchemy_nova_watcher",
-    "SERVER_URL": "http://192.168.0.70:8200",
+    "SERVER_URL": "http://127.0.0.1:8200",
 }
 apm = make_apm_client(apm_config)
 app.add_middleware(ElasticAPM, client=apm)

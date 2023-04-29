@@ -64,11 +64,14 @@ async def get_episodes_elastic(
     )
 
     json_dict: dict = multiline.loads(range_query_body, multiline=True)
-    resp = await es.search(
-        index=ELASTIC_CONFIG["index_dump_data_into"],
-        body={"query": json_dict},
-        size=9999,
-    )
+    try:
+        resp = await es.search(
+            index=ELASTIC_CONFIG["index_dump_data_into"],
+            body={"query": json_dict},
+            size=9999,
+        )
+    except Exception as elastic_exc:
+        asdf=0
     result: list = resp.body["hits"]["hits"]
     result_sources: list = [res["_source"] for res in result]
     distinct_episodes = []

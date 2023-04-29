@@ -7,7 +7,7 @@ ses = AlchemySession()
 Base = declarative_base(ses.engine)
 
 
-# sqlalchemy.url = postgresql://postgres:postgres_ali@192.168.0.70:5446/mayadeen
+# sqlalchemy.url = postgresql://postgres:postgres_ali@127.0.0.1:5446/mayadeen
 
 
 # THE LINK HERE IS VERY IMPORTANT
