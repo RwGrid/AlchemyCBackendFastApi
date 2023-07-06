@@ -15,7 +15,8 @@ from os import path
 from datetime import datetime as dtm
 import get_channel_info_youtubeapi_single_url
 from app.connection_to_postgre import models
-from app.connection_to_postgre.crud import get_guest_info_to_modify
+from app.connection_to_postgre.crud import get_guest_info_to_modify, get_guest_info_by_name, get_editor_by_name, \
+    get_program_by_name, get_episode_type_by_name, get_graphic_by_name, get_host_by_name
 from app.connection_to_postgre.database import AlchemySession
 
 
@@ -28,6 +29,7 @@ def process_youtube_episode(comments_allowed, url):
     youtube_status, youtube_crawl_obj = get_channel_info_youtubeapi_single_url.YoutubeWrapper(
         allow_comments=comments_allowed).get_youtube_info(
         url)
+
     youtube_crawl_obj['Youtube_Link'] = url
     dict2 = {}
     if 'comments' in youtube_crawl_obj:
@@ -66,7 +68,24 @@ def process_youtube_episode(comments_allowed, url):
             'Youtube_Channel_subscriber_count'] != '':
             dict2["عدد المشتركين بالقناة"] = int(youtube_crawl_obj['Youtube_Channel_subscriber_count'])
 
-    return dict2
+    return dict2, youtube_status
+
+
+def convert_int_values_to_string(data):
+    if isinstance(data, dict):
+        new_dict = {}
+        for key, value in data.items():
+            new_dict[key] = convert_int_values_to_string(value)
+        return new_dict
+    elif isinstance(data, list):
+        new_list = []
+        for item in data:
+            new_list.append(convert_int_values_to_string(item))
+        return new_list
+    elif isinstance(data, int):
+        return str(data)
+    else:
+        return data
 
 
 def process_episode(sent_json):
@@ -152,7 +171,7 @@ def process_episode(sent_json):
                 if len(record['formGraphic']) > 0:
                     dict2['فريق الغرافيك'] = '|'.join(record['formGraphic'])
 
-        # dict2["التصنيف"] = str(record['formEpisodeType']).strip()
+        dict2["التصنيف"] = str(record['formEpisodeType']).strip()
         # dict2["التصنيف"]
         # dict2["طبيعة البث"] = record['formBroadcastType'].strip()
         # date = record['formEpiDate']
@@ -238,6 +257,64 @@ def process_episode(sent_json):
         guestslist = []
         db_init = AlchemySession().get_session_only()
         db_init = db_init()
+        # i did this in order to fetch the expertise of each guest
+        guests_list_from_postgres = []
+        for guest in record['formGuests']:
+            if guest['GuestName'] != '':
+                db_guest_info = get_guest_info_by_name(db_init, guest['GuestName'])
+                guest_obj = dict()
+                guest_obj_postgre = dict()
+                guests_list_from_postgres.append(dict(db_guest_info))
+                guest_obj["اسم الضيف"] = db_guest_info['name'].strip()
+                guest_obj_postgre['guest_name'] = db_guest_info['name'].strip()
+                if 'expertise' in db_guest_info:
+                    if db_guest_info.get('expertise', None) is not None:
+                        guest_obj["مهنة الضيف"] = db_guest_info['expertise'].strip()
+                        guest_obj_postgre['guest_expertise'] = db_guest_info['expertise'].strip()
+                else:
+                    guest_obj["مهنة الضيف"] = "لا يوجد حاليا"
+                    guest_obj_postgre['guest_expertise'] = "لا يوجد حاليا"
+                if 'GuestDesc' in guest:
+                    if db_guest_info.get('GuestDesc', None) is not None:
+                        guest_obj["صفة الضيف"] = list(guest['GuestDesc'])
+                        guest_obj_postgre['guest_descs'] = db_guest_info['descriptions']
+                if 'id' in db_guest_info:
+                    guest_obj_postgre['guest_id'] = db_guest_info['id']
+
+                # if db_guest_info.__dict__.get('country', None) is not None:
+                if 'country' in db_guest_info:
+                    if db_guest_info.get('country', None) is not None:
+                        guest_obj['بلد الضيف'] = db_guest_info['country']
+                guestslist.append(guest_obj)
+                # guests_list_from_postgres.append(guest_obj_postgre)
+        editor_list_from_postgres = []
+        if 'formEditors'in record:
+            if record.get('formEditors', None) is not None:
+                for editor in record['formEditors']:
+                    editor_list_from_postgres.append(get_editor_by_name(db_init, editor))
+        graphic_list_from_postgres = []
+        if 'formGraphic'in record:
+            if record.get('formGraphic', None) is not None:
+                for graphic in record['formGraphic']:
+                    graphic_list_from_postgres.append(get_graphic_by_name(db_init, graphic))
+        if 'formProgramName'in record:
+            if record.get('formProgramName', None) is not None:
+                program_name_postgres = get_program_by_name(db_init, record['formProgramName'])
+        if 'formEpisodeType'in record:
+            if record.get('formEpisodeType', None) is not None:
+                    episode_type_postgres = get_episode_type_by_name(db_init, record['formEpisodeType'])
+        hosts_list_from_postgres=[]
+        if 'formHosts' in record:
+            if record.get('formHosts', None) is not None:
+                if len(record['formHosts']) > 0:
+                    for hst in record['formHosts']:
+                        hosts_list_from_postgres.append(get_host_by_name(db_init, hst))
+
+        dfgsdfg=0
+        """        
+        guestslist = []
+        db_init = AlchemySession().get_session_only()
+        db_init = db_init()
         for guest in record['formGuests']:
             if guest['GuestId'] != '':
                 db_guest_info: models.guests_info = get_guest_info_to_modify(db_init, guest['GuestId'])
@@ -247,7 +324,7 @@ def process_episode(sent_json):
                 guest_obj["صفة الضيف"] = list(guest['GuestDesc'])
                 if db_guest_info.__dict__.get('country', None) is not None:
                     guest_obj['بلد الضيف'] = db_guest_info.country
-                guestslist.append(guest_obj)
+                guestslist.append(guest_obj)"""
         # for k in range(6):
         #     cols = [cl for cl in guest_cols if str(k + 1) in cl]
         #     guest_obj = {}
@@ -268,8 +345,10 @@ def process_episode(sent_json):
         # for sub_subject in sub_subject_cols:
         #     if record[sub_subject] != '' and record[sub_subject] != ' ':
         #         sub_subjectlist.append({"الموضوع الثانوي": record[sub_subject]})
-        for sub_subject in record['formSubSubjects']:
-            sub_subjectlist.append({"الموضوع الثانوي": sub_subject})
+        if 'formSections' in record:
+            if len(record['formSections']) > 0:
+                for sub_subject in record['formSections']:
+                    sub_subjectlist.append({"الموضوع الثانوي": sub_subject['SectionTitle']})
 
         if dict2["البرنامج"] == "التحليلية":
             lol = 0
@@ -315,10 +394,39 @@ def process_episode(sent_json):
                         current_extra_guest = guestslist[i]
                         # t7lilya_extra_guests.append(current_extra_guest['اسم الضيف'])
                         dict2["ضيف التحليلية" + "_" + str(i + 1)] = current_extra_guest['اسم الضيف']
+        dict2['guest_list'] = guestslist
+        dict2['الضيوف'] = guestslist
         dict2 = {key: value for (key, value) in dict2.items() if value != ' ' and value != ''}
         dict2 = dict((k, v) for k, v in dict2.items() if v)
         hash_checksum = hashlib.md5(json.dumps(dict2, sort_keys=True, ensure_ascii=True).encode('utf-8')).hexdigest()
         dict2['episode_id'] = hash_checksum
+        dict2['guest_list_postgres']=guests_list_from_postgres
+        dict2['editors_list_postgres']=editor_list_from_postgres
+        dict2['graphic_list_from_postgres'] = graphic_list_from_postgres
+        dict2['program_name_postgres']=program_name_postgres
+        dict2['episode_type_postgres']=episode_type_postgres
+        dict2['hosts_list_from_postgres']=hosts_list_from_postgres
+        if 'formTags' in record:
+            tags = [tg['label'] for tg in record['formTags']]
+            dict2['tags'] = tags
+        if 'formSummary' in record:
+            dict2['الملخص'] = record['formSummary']
+        if 'formEditors' in record:
+            dict2['الفريق المنتج'] = record['formEditors']
+        if 'formGraphic' in record:
+            dict2['الفريق الفني'] = record['formGraphic']
+        if 'formSections' in record:
+            if len(record['formSections']) > 0:
+                dict2['مقاطع الحلقة'] = record['formSections']
+            else:
+                dict2['مقاطع الحلقة'] = [
+                    {'SectionStart': '00:00:00', 'SectionEnd': record['formSectionDuration'] + ':00',
+                     'SectionTitle': record['formMainSubject']}]
+        if 'formSectionDuration' in record:
+            dict2['مدة الحلقة'] = record['formSectionDuration']
+
+        dict2['original_obj'] = record.copy()
+        dict2['original_obj'] = convert_int_values_to_string(dict2['original_obj'])
         original_row = pd.DataFrame([dict2])
         dict2["طبيعة المقطع"] = ""
         ReadyToInsertRows = []
@@ -441,7 +549,6 @@ def process_episode(sent_json):
                 if len(guest_desc_lst) > 0:
                     rec['Guests_Desc_List'] = '|'.join(guest_desc_lst)
                     rec['Guests_Desc_List'] = rec['episode_id'] + '_' + rec['Guests_Desc_List']
-                ll = 0
             if subjectslist_checksumed.empty == False:
                 episode_subjects = {}
                 episode_subjects['episode_sub_subjects_list'] = subjectslist_checksumed.to_dict(orient='records')
@@ -494,7 +601,9 @@ def process_episode(sent_json):
                 # Assuming there's a columns with the headers 'name', 'height', 'weight'
                 stop_list = list(stop_list_datafframe['stop_words'])
                 words = [word for word in key_words_comma_seperated_cleaned2 if word.lower() not in stop_list]
-                rec['الكلمات المفتاحية'] = " ".join(words)
+                tags_concatenated = " ".join(tags)
+                rec['الكلمات المفتاحية'] = " ".join(words) + " " + tags_concatenated
+
             ReadyToInsertRows.append(rec)
         # with open('count.txt', 'w') as f:
         #     f.write(str(counter + 1))

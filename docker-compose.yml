@@ -6,7 +6,13 @@ services:
     image: alchemyc
     volumes:
        - ./.env:/app/.env
-       - ./postgre.json:/app/all_episodes_json/postgre.json
+       - ./postgre.json:/app/connection_to_postgre/postgre.json
+       - ./reinitialize_super_user.json:/app/reinitialize_super_user.json
+       - ./postgre_initialized.json:/app/connection_to_postgre/postgre_initialized.json
+       - ./.env.nginx:/app/.env.nginx
+       - ./.env.sentiment:/app/.env.sentiment
+       - ./ca.crt:/app/ca.crt
+       - ./ca.key:/app./ca.key
     ports:
       - "3201:91"
     networks:

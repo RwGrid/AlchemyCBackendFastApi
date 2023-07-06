@@ -16,7 +16,7 @@ RUN chmod +x /start-reload.sh
 COPY ./app /app
 WORKDIR /app/
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=..
 
 EXPOSE 91
 

@@ -1,15 +1,17 @@
 from fastapi.encoders import jsonable_encoder
 from starlette.responses import JSONResponse
-
 from app.connection_to_postgre.models import guest_names_alchemy, guests_info
 from fastapi import Depends
 from fastapi import Request, Cookie, APIRouter
 from sqlalchemy.orm import Session  # type: ignore
-
-from ..CustomClasses.typeHintMsh import SqlOpMsg
-from ..connection_to_postgre import crud, schemas_sql_alchemy
-from ..dependencies import verify_cookie
+# from ..CustomClasses.typeHintMsh import SqlOpMsg
+# from ..connection_to_postgre import crud, schemas_sql_alchemy
+# from ..dependencies import verify_cookie
+from app.CustomClasses.typeHintMsh import SqlOpMsg
+from app.connection_to_postgre import crud, schemas_sql_alchemy
+from app.dependencies import verify_cookie
 from app.SessionFactory import get_db
+from app.utilities.img_utility import base64_to_image
 
 guests_router = APIRouter(
     tags=["episode_types"],
@@ -22,7 +24,9 @@ guests_router = APIRouter(
 async def read_item(
         guest_info: schemas_sql_alchemy.GuestsInfoC, db: Session = Depends(get_db)
 ) -> SqlOpMsg:
-    return crud.create_guest_info(db=db, guest_info_pydantic=guest_info)
+    image = guest_info.image.split(';base64,')[1]
+    image_hash=base64_to_image(image)
+    return crud.create_guest_info(db=db, guest_info_pydantic=guest_info,img_hash=image_hash)
     # image = guest_info.image.split(';base64,')[1]
     # # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
     # img = Image.open(io.BytesIO(base64.decodebytes(bytes(image, "utf-8"))))
@@ -42,6 +46,8 @@ async def create_guest_name(
     response_model=list[schemas_sql_alchemy.GuestInfo]
 )
 async def get_guest_info(db: Session = Depends(get_db)):
+    # returning the base64 image is reducing the speed of the page as a whole
+    # the solution is to create nginx and save the path in the database to the file system
     guest_info_recs: list[guests_info] = crud.get_guests_info(db)
     return guest_info_recs
 
@@ -61,7 +67,9 @@ async def update_guest_info(
         guestInfo: schemas_sql_alchemy.GuestsInfoC,g_id: int,
         db: Session = Depends(get_db),
 ):
-    return crud.update_guest_info(db=db, guest_info_id=g_id, guest_object_update=guestInfo)
+    image = guestInfo.image.split(';base64,')[1]
+    image_hash=base64_to_image(image)
+    return crud.update_guest_info(db=db, guest_info_id=g_id, guest_object_update=guestInfo,img_hash=image_hash)
 
 
 @guests_router.delete("/DeleteGuestI/{g_id}")

@@ -3,8 +3,14 @@ from typing import Union, List, Optional
 
 import pydantic
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, SecretStr, Json
+from pydantic import BaseModel, SecretStr, Json,parse_obj_as
 from pydantic.schema import datetime
+from sqlalchemy.orm.collections import InstrumentedList
+
+
+class TagsOptions(BaseModel):
+    label: str
+    value: str
 
 
 class CustomBaseModel(BaseModel):
@@ -31,6 +37,10 @@ class AuthDetails(BaseModel):
     user_password: str
 
 
+class Supervises(BaseModel):
+    supervisor_type: Optional[str]
+
+
 class UsersC(BaseModel):
     user_name: str
     user_display_name: str
@@ -41,31 +51,31 @@ class UsersC(BaseModel):
     class Config:
         orm_mode = True
 
-    @pydantic.validator("user_name")
-    @classmethod
-    def username_valid(cls, value):
-        # here we are wrapping this function to perform validation on the 'user_name' field passed to this class
-        # what is returned here will be what is returned when calling this class on 'user_name' just like formik
-        if any(p in value for p in string.punctuation):
-            raise ValueError("Username must not include punctuation")
-        else:
-            return value
-
-    @pydantic.validator("user_password")
-    @classmethod
-    def user_password_valid(cls, value):
-        validated_value = value.get_secret_value()
-        if len(validated_value) < 8:
-            raise ValueError("Password must be at least 8 characters")
-
-        if any(p in validated_value for p in string.punctuation):
-            if any(d in validated_value for d in string.digits):
-                if any(l in validated_value for l in string.ascii_lowercase):
-                    if any(g in validated_value for g in string.ascii_uppercase):
-                        return value
-        raise ValueError(
-            "Password needs at least one punctuation symbol,digit,upper and lower case character"
-        )
+    # @pydantic.validator("user_name")
+    # @classmethod
+    # def username_valid(cls, value):
+    #     # here we are wrapping this function to perform validation on the 'user_name' field passed to this class
+    #     # what is returned here will be what is returned when calling this class on 'user_name' just like formik
+    #     if any(p in value for p in string.punctuation):
+    #         raise ValueError("Username must not include punctuation")
+    #     else:
+    #         return value
+    #
+    # @pydantic.validator("user_password")
+    # @classmethod
+    # def user_password_valid(cls, value):
+    #     validated_value = value.get_secret_value()
+    #     if len(validated_value) < 8:
+    #         raise ValueError("Password must be at least 8 characters")
+    #
+    #     if any(p in validated_value for p in string.punctuation):
+    #         if any(d in validated_value for d in string.digits):
+    #             if any(l in validated_value for l in string.ascii_lowercase):
+    #                 if any(g in validated_value for g in string.ascii_uppercase):
+    #                     return value
+    #     raise ValueError(
+    #         "Password needs at least one punctuation symbol,digit,upper and lower case character"
+    #     )
 
 
 class Users(UsersC):
@@ -77,12 +87,13 @@ class Users(UsersC):
 
 class GuestsInfoC(BaseModel):
     name: str
-    expertise: str
+    expertise: Optional[str]
     phone_number: Optional[str]
     phone_extension: Optional[str]
     landline: Optional[str]
     descriptions: list
     image: Optional[str]
+    image_hash: Optional[str]
     email: Optional[str]
     country: Optional[str]
 
@@ -92,8 +103,20 @@ class GuestsInfoC(BaseModel):
     @classmethod
     def from_orm_guest_info_full(cls, orm_instance):
         data = dict(orm_instance.__dict__)
-        data['descriptions'] = [desc.guest_desc for desc in orm_instance.descriptions]
-        data['expertise'] = orm_instance.expertise.expertise
+        if orm_instance.descriptions is not None and len(orm_instance.descriptions)>0:
+          data['descriptions'] = [desc.guest_desc for desc in orm_instance.descriptions]
+        if orm_instance.expertise is not None:
+          data['expertise'] = orm_instance.expertise.expertise
+        del data['image']
+        return cls(**data)
+
+    @classmethod
+    def from_orm_guest_info_full_with_base64(cls, orm_instance):
+        data = dict(orm_instance.__dict__)
+        if orm_instance.descriptions is not None and len(orm_instance.descriptions)>0:
+            data['descriptions'] = [desc.guest_desc for desc in orm_instance.descriptions]
+        if orm_instance.expertise is not None:
+            data['expertise'] = orm_instance.expertise.expertise
         return cls(**data)
 
 
@@ -129,11 +152,77 @@ class Roles(RolesC):
     class Config:
         orm_mode = True
 
-
+class UsersSchemaRoles(Users):
+    roles: List[Roles]
+def convert_to_pydantic(data, pydantic_model):
+    if isinstance(data, list):
+        return [convert_to_pydantic(item, pydantic_model) for item in data]
+    elif isinstance(data, dict):
+        return pydantic_model(**{
+            key: convert_to_pydantic(value, getattr(pydantic_model, key).field_info.outer_type_)
+            for key, value in data.items()
+        })
+    else:
+        return data
 class UsersSchema(Users):
     roles: List[Roles]
-    supervisors: List[Users]
+    supervised_by_roles: List[Roles] = []
+    supervises_these_roles:List[Roles] = []
+    supervised_by: List[Users] = []
+    supervisors_these: List[Users] = []
+    class Config:
+        orm_mode = True
+    @classmethod
+    def from_orm(cls, obj):
+        data = dict(obj.__dict__)
+        data['supervised_by_roles'] = [rl for rl in obj.supervised_by_roles]
+        data['supervises_these_roles'] =[rl for rl in obj.supervises_these_roles]
+        try:
+            data['supervised_by'] = [usr for usr in obj.supervised_by]
+            data['supervisors_these'] = [usr for usr in obj.supervisors_these]
+        except Exception as xsxsd:
+            asfdasdf=0
+        return cls(**data)
+    # roles: List[Roles]
+    # supervised_by_roles: List[str] = []
+    # supervises_these_roles:List[str] = []
+    # supervised_by: List[str] = []
+    # supervisors_these: List[str] = []
+    # class Config:
+    #     orm_mode = True
+    # @classmethod
+    # def from_orm(cls, obj):
+    #     data = dict(obj.__dict__)
+    #     data['supervised_by_roles'] = [rl.role_name for rl in obj.supervised_by_roles]
+    #     data['supervises_these_roles'] =[rl.role_name for rl in obj.supervises_these_roles]
+    #     try:
+    #         data['supervised_by'] = [usr.user_name for usr in obj.supervised_by]
+    #         data['supervisors_these'] = [usr.user_name for usr in obj.supervisors_these]
+    #     except Exception as xsxsd:
+    #         asfdasdf=0
+    #     return cls(**data)
 
+    # @classmethod
+    # def from_orm(cls, obj,sup_other_users,supervised_by_roles):
+    #     kwargs = obj.__dict__
+    #     try:
+    #         if 'supervised_by_roles' not in kwargs:
+    #             kwargs['supervised_by_roles'] = InstrumentedList()
+    #         else:
+    #             kwargs['supervised_by_roles']=InstrumentedList(supervised_by_roles)
+    #         if 'supervised_by' not in kwargs:
+    #             kwargs['supervised_by'] = InstrumentedList()
+    #         else:
+    #             kwargs['supervised_by']=InstrumentedList(sup_other_users)
+    #             asdfda=0
+    #
+    #         if kwargs['supervised_by_roles'] is None:
+    #             kwargs['supervised_by_roles'] = InstrumentedList()
+    #         if kwargs['supervised_by'] is None:
+    #             kwargs['supervised_by'] = InstrumentedList()
+    #     except Exception as exx:
+    #         pass
+    #     return cls(**kwargs)
 
 class VisibleTabsC(BaseModel):
     tab_name: str

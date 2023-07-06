@@ -2,8 +2,8 @@ from app.connection_to_postgre.models import program_name_alchemy
 from fastapi import Depends
 from fastapi import APIRouter
 from sqlalchemy.orm import Session  # type: ignore
-from ..connection_to_postgre import crud, schemas_sql_alchemy
-from ..dependencies import verify_cookie
+from app.connection_to_postgre import crud, schemas_sql_alchemy
+from app.dependencies import verify_cookie
 from app.SessionFactory import get_db
 
 program_router = APIRouter(

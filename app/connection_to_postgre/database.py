@@ -39,7 +39,6 @@ class AlchemySession:
                         conn.execute("create database " + database_name)
                 except Exception as ex:
                     print("database alchemy already exists")
-
         # then we reconnect to the newly created database
         SQLALCHEMY_DATABASE_URL = (
                 "postgresql://"

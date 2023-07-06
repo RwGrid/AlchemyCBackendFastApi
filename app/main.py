@@ -1,6 +1,6 @@
+import ujson
 from fastapi.encoders import jsonable_encoder
-#test youtube https://www.youtube.com/watch?v=aTYc_MML9Gs
-from app.CustomClasses.typeHintMsh import SqlOpMsg
+# test youtube https://www.youtube.com/watch?v=aTYc_MML9Gs
 from connection_to_postgre import crud, models, schemas_sql_alchemy
 from connection_to_postgre.auth import AuthHandler
 from connection_to_postgre.schemas_sql_alchemy import (
@@ -12,6 +12,7 @@ from SessionFactory import session_maker, get_db, engine
 
 import datetime
 import json
+import ujson
 import logging
 from typing import Optional, List
 from fastapi import Request, Cookie, APIRouter
@@ -28,21 +29,37 @@ from connection_to_postgre.models import (
 
     visible_tabs,
 )
-from .connection_to_postgre import database
-from .connection_to_postgre.database import AlchemySession
-from .routers.TasksPages import tasks_router
-from .routers.episode_types_page import episode_types_router
-from .routers.guest_page import guests_router
-from .routers.hosts_page import hosts_router
-from .routers.insert_episodes_page import insert_episodes_router
-from .routers.manage_episodes_page import manage_episodes_router
-from .routers.program_page import program_router
-from .routers.roles_page import roles_router
-from .routers.users_page import users_router
-from .routers.graphic_page import graphic_router
-from .routers.editor_page import editor_router
-from .routers.actions_page import action_router
-from .routers.comments_page import comments_dashboard_router, comments_dashboard_router_experimenting
+# from .connection_to_postgre import database
+# from .connection_to_postgre.database import AlchemySession
+# from .routers.TasksPages import tasks_router
+# from .routers.episode_types_page import episode_types_router
+# from .routers.guest_page import guests_router
+# from .routers.hosts_page import hosts_router
+# from .routers.insert_episodes_page import insert_episodes_router
+# from .routers.manage_episodes_page import manage_episodes_router
+# from .routers.program_page import program_router
+# from .routers.roles_page import roles_router
+# from .routers.users_page import users_router
+# from .routers.graphic_page import graphic_router
+# from .routers.editor_page import editor_router
+# from .routers.actions_page import action_router
+# from .routers.comments_page import comments_dashboard_router, comments_dashboard_router_experimenting
+# from .connection_to_postgre import database
+from connection_to_postgre.database import AlchemySession
+from routers.TasksPages import tasks_router
+from routers.episode_types_page import episode_types_router
+from routers.guest_page import guests_router
+from routers.hosts_page import hosts_router
+from routers.insert_episodes_page import insert_episodes_router
+from routers.manage_episodes_page import manage_episodes_router
+from routers.program_page import program_router
+from routers.roles_page import roles_router
+from routers.users_page import users_router
+from routers.graphic_page import graphic_router
+from routers.editor_page import editor_router
+from routers.actions_page import action_router
+from routers.comments_page import comments_dashboard_router, comments_dashboard_router_experimenting
+
 # SEE SOCIAL MEDIA MONITORING APPS
 # MAKE THIS CODE HERE RUN ON THE FIRST TIME ONLY
 # This is a ----------------Test Code----------------
@@ -52,6 +69,7 @@ from .routers.comments_page import comments_dashboard_router, comments_dashboard
 # except Exception as ex:
 #     print(str(ex))
 # testing a commit
+# testing a commit 2
 # This is a ----------------END Test Code----------------
 
 try:
@@ -60,6 +78,7 @@ except Exception as ex:
     print(str(ex))
 # ----------------------------------
 import os
+
 print("inserting common data into databases")
 # try:
 #     cmd = "python3 /home/ali/Desktop/ExtractJsonObjFromExcel/run_all.py"
@@ -83,9 +102,8 @@ from elastic_session import ElasticSearchSingelton
 es = ElasticSearchSingelton().es_client
 print("-----------------------Testing My Code--------------------")
 print("-----------------------I ENDED Testing----------------------------")
-
 app = FastAPI()
-
+# app = FastAPI(json_dumps=ujson.dumps, json_loads=ujson.loads)
 app.include_router(insert_episodes_router)
 app.include_router(manage_episodes_router)
 
@@ -116,27 +134,27 @@ origins = ["*"]
 ORIGINS_LIST = [
     "http://localhost:3000",
     "http://localhost:3000/users",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3000",
-    "https://127.0.0.1:3000",
-    "http://127.0.0.1:81",
-    "https://127.0.0.1:81",
-    "https://127.0.0.1:80",
-    "https://127.0.0.1:80/",
-    "https://127.0.0.1:80/login",
-    "https://127.0.0.1:80/users",
+    "http://0.0.0.0:3000", "http://0.0.0.0:3201", "http://0.0.0.0:*", "https://0.0.0.0:3201", "https://0.0.0.0:*",
+    "http://0.0.0.0:3000",
+    "https://0.0.0.0:3000",
+    "http://0.0.0.0:81",
+    "https://0.0.0.0:81",
+    "https://0.0.0.0:80",
+    "https://0.0.0.0:80/",
+    "https://0.0.0.0:80/login",
+    "https://0.0.0.0:80/users",
     "http://192.168.10.118",
     "https://192.168.10.118",
     "https://192.168.10.254",
     "http://192.168.10.254",
     "http://192.168.10.254/login" "https://localhost:81",
-    "https://127.0.0.1:81",
-    "https://127.0.0.1:81/",
+    "https://0.0.0.0:81",
+    "https://0.0.0.0:81/",
     "https://140.125.1.91:81",
     "https://140.125.1.91:81/",
     "https://140.125.1.91:80",
     "https://140.125.1.91:80/",
-    "https://127.0.0.1:81/users",
+    "https://0.0.0.0:81/users",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -150,7 +168,7 @@ app.add_middleware(
 
 apm_config = {
     "SERVICE_NAME": "alchemy_nova_watcher",
-    "SERVER_URL": "http://127.0.0.1:8200",
+    "SERVER_URL": "http://0.0.0.0:8200",
 }
 apm = make_apm_client(apm_config)
 app.add_middleware(ElasticAPM, client=apm)
@@ -164,8 +182,9 @@ async def startup():
     is_connected: bool = await es.ping()
     try:
         await es.indices.create(index='data_alchemy2.1')
+        print("creating elastic index from the start")
     except Exception as createdException:
-        print("alchemy2.1 already exists, change mapping if u didn't"+str(createdException))
+        print("alchemy2.1 already exists, change mapping if u didn't" + str(createdException))
     assert (is_connected) == True
     if is_connected:
         print("> You have Successfully connected to Elasticsearch Instance (--)")
@@ -200,7 +219,7 @@ def initialize_master_user():
     try:
         crud.delete_master_role(db_init, "roleXF")
     except Exception as exx:
-        print(str(exx)+"no role to delete in the first place")
+        print(str(exx) + "no role to delete in the first place")
     try:
         crud.delete_master_user(db_init, "12345")
     except Exception as exx:
@@ -282,7 +301,6 @@ def login(request: Request, auth_details: AuthDetails, db: Session = Depends(get
     cookie_authorization = request.cookies.get("access_token")
     if cookie_authorization is not None:
         x = cookie_authorization.replace("Bearer", "").strip("").replace(" ", "")
-
         res = auth_handler.decode_token(x)
         if res["status_code"] == "401":
             token = auth_handler.encode_token(user.user_name)
@@ -303,6 +321,25 @@ def login(request: Request, auth_details: AuthDetails, db: Session = Depends(get
                         cookie = cookie + "; SameSite=none"
                         response.raw_headers[idx] = (header[0], cookie.encode())
             return response
+        # if auth_details.user_name != user.user_name:
+        #     token = auth_handler.encode_token(user.user_name)
+        #     response = JSONResponse(
+        #         content={"token": "good", "user_display": user.user_display_name, "user_name": user.user_name}
+        #     )
+        #     response.set_cookie(
+        #         key="access_token",
+        #         httponly=True,
+        #         secure=True,
+        #         samesite="none",
+        #         value=f"Bearer {token}",
+        #     )  # set HttpOnly cookie in response
+        #     for idx, header in enumerate(response.raw_headers):
+        #         if header[0].decode("utf-8") == "set-cookie":
+        #             cookie = header[1].decode("utf-8")
+        #             if "SameSite=none" not in cookie:
+        #                 cookie = cookie + "; SameSite=none"
+        #                 response.raw_headers[idx] = (header[0], cookie.encode())
+        #     return response
         response = JSONResponse(
             content={"token": "good", "user": user.user_display_name, "user_name": user.user_name}
         )
@@ -391,7 +428,7 @@ async def create_tabs(request: Request, db: Session = Depends(get_db)):
     for headTab, visibleTab in visible_tabs_req.items():
         for key in visibleTab.keys():
             db_tab: visible_tabs = crud.get_tab_if_exists(
-                db, tab_name=visibleTab[key]["text"], tab_head_name=headTab
+                db, tab_name=visibleTab[key]["inner_value"], tab_head_name=headTab
             )
             if db_tab:
                 print("tab already inserted")
@@ -400,7 +437,7 @@ async def create_tabs(request: Request, db: Session = Depends(get_db)):
                 print("tab inserted successfully")
                 # raise HTTPException(status_code=400, detail="tab already exists")
             tab = dict()
-            tab["tab_name"] = visibleTab[key]["text"]
+            tab["tab_name"] = visibleTab[key]["inner_value"]
             tab["head_tab_name"] = headTab
             tab["tab_desc"] = visibleTab[key]["desc"]
             m = VisibleTabsC(

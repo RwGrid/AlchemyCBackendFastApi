@@ -8,9 +8,9 @@ from app.connection_to_postgre.models import users
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Request, Cookie, APIRouter
 from sqlalchemy.orm import Session  # type: ignore
-from app.connection_to_postgre.schemas_sql_alchemy import Users
-from ..connection_to_postgre import crud
-from ..dependencies import verify_cookie
+from app.connection_to_postgre.schemas_sql_alchemy import Users, UsersSchema
+from app.connection_to_postgre import crud
+from app.dependencies import verify_cookie
 from app.SessionFactory import get_db
 
 # the 'tags' in the router are important for-> These "tags" are especially useful for the automatic interactive
@@ -30,11 +30,15 @@ async def create_user(request: Request, db: Session = Depends(get_db), ):
     return status_response
 
 
-@users_router.get("/GetUsers", response_model=List[Users])
+@users_router.get("/GetUsers", response_model=List[UsersSchema])
 async def get_users(db: Session = Depends(get_db)):
-    db_users: users = crud.get_all_users(db)
+    # db_users: users = crud.get_all_users(db)
+    db_users: users = crud.get_users_with_roles(db)
     return db_users
-
+# @users_router.get("/GetUsers", response_model=List[Users])
+# async def get_users(db: Session = Depends(get_db)):
+#     db_users: users = crud.get_all_users(db)
+#     return db_users
 
 @users_router.delete("/DeleteUser/{user_id}")
 def delete_host(user_id: int, db: Session = Depends(get_db), access_token: dict = Depends(verify_cookie)):

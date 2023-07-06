@@ -15,13 +15,13 @@ import pandas as pd
 import requests
 from dotenv import dotenv_values
 from fastapi import Depends, Query
-from fastapi import Request, APIRouter
+from fastapi import Request, APIRouter,BackgroundTasks
 from nltk.corpus import stopwords
 from sqlalchemy.orm import Session  # type: ignore
 from starlette.responses import JSONResponse
 from tzlocal import get_localzone
-from ..dependencies import verify_cookie
-from ..send_data_to_elastic_utility import process_youtube_episode
+from app.dependencies import verify_cookie
+from app.send_data_to_elastic_utility import process_youtube_episode
 
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -50,7 +50,6 @@ with open('./arabic_stop_words.txt', 'r') as file:
 
 def clean_text(sentences_list):
     cleaned_sentences = []
-
     for sentence in sentences_list:
         sentence_without_punctuation = re.sub(r'[^\w\s]', ' ', sentence.strip())
         stop_words_english = stopwords.words('english')
@@ -142,77 +141,111 @@ def remove_br(sentence):
 #     url = ast.literal_eval(url)
 #     decoded_url = decrypt(url, '01234567890123456789012345678901')
 #     asdfsadf = 0
-@comments_dashboard_router_experimenting.post("/GetYoutubeCommentsSingle")
-async def get_comments_analytics(request: Request):
-    comments_url: dict = await request.json()
-    # assgf = {'youtube_url': 'https://www.youtube.com/watch?v=3NnU0eY_Bbs'}
-    url = comments_url['youtube_url']
-    youtube_data = process_youtube_episode(comments_allowed=True, url=url)
-    comments = youtube_data['comments']
-    comments_lst = [cmnt['sentence'] for cmnt in comments]
-    cmnt_obj = {'sentences': comments_lst}
+def process_youtube(comments_url):
+    # response = requests.post(
+    #     'http://' + sentiment_service['SENTIMENT_IP'] + ':' + sentiment_service['SENTIMENT_PORT'] + '/get_sentiment',
+    #     json=comments_url)
+    print("here processing youtube")
     response = requests.post(
-        'http://' + sentiment_service['SENTIMENT_IP'] + ':' + sentiment_service['SENTIMENT_PORT'] + '/get_sentiment',
-        json=cmnt_obj)
-    sentiment_result = json.loads(response.text)
-    sentiment_stat = dict()
-    sentiment_stat['negative_comments'] = len([sent for sent in sentiment_result if sent['sentiment'] == 'negative'])
-    sentiment_stat['positive_comments'] = len([sent for sent in sentiment_result if sent['sentiment'] == 'positive'])
-    sentiment_stat['neutral_comments'] = len([sent for sent in sentiment_result if sent['sentiment'] == 'neutral'])
+        'http://0.0.0.0:4432'+'/get_sentiment',
+        json=comments_url)
+    return response
+def notify_client(result):
+    # notify the client that the task is complete
+    print("Task completed with result:", result)
 
-    sentiment_sentences = pd.DataFrame(sentiment_result)
-    comments_df = pd.DataFrame(comments)
-    comments_with_sentiment = pd.merge(sentiment_sentences, comments_df, on='sentence', how='inner').astype(
-        str)
-    comments_with_sentiment['sentence'] = comments_with_sentiment['sentence'].apply(lambda x: remove_br(x))
-    comments_with_sentiment = comments_with_sentiment.to_dict(
-        orient='records')
-    date_counts = defaultdict(int)
+async def process_data(data):
+    # perform some processing on the data
+    result = data + " processed"
+    print(result)
 
-    for d in comments_with_sentiment:
-        # convert ISO formatted date string to a datetime object
-        date = datetime.datetime.fromisoformat(d['updated_at'].replace('Z', '+00:00')).date()
-        timestamp = int(time.mktime(date.timetuple())) * 1000
-        d['timestamp']=timestamp
-        date_counts[timestamp] += 1
-    # convert dictionary to a list of tuples
-    date_counts_list = [[(date), count] for date, count in date_counts.items()]
-    # sort list by date
-    date_counts_list.sort()
 
-    clean_comments = clean_text(comments_lst)
-    bigrams, top_bigram_series, top_bigram_tags = get_bigrams(corpus=" ".join(clean_comments), top_x=10)
-    unigrams, top_unigram_series, top_unigram_tags = get_unigrams(corpus=" ".join(clean_comments), top_x=10)
-    stats = dict()
-    stats['عدد التعليقات'] = str(youtube_data['عدد التعليقات'])
-    stats['عدد الإعجابات'] = str(youtube_data['عدد الإعجابات'])
-    stats['عدد المشاهدات'] = str(youtube_data['عدد المشاهدات'])
-    comments_info = dict()
-    comments_info['unigram'] = unigrams
-    comments_info['bigram'] = bigrams
-    comments_info['top_unigram_series'] = top_unigram_series
-    comments_info['top_unigram_tags'] = top_unigram_tags
-    comments_info['top_bigram_series'] = top_bigram_series
-    comments_info['top_bigram_tags'] = top_bigram_tags
-    comments_info['stats'] = stats
-    comments_info['comments_data'] = comments_with_sentiment
-    comments_info['message'] = "successfully analyzed comments"
-    comments_info['status'] = "success"
-    comments_info['sentiment_stat'] = sentiment_stat
-    comments_info = jsonable_encoder(comments_info)
-    comments_info['engagement_metric'] = math.ceil(
-        int(youtube_data['عدد المشاهدات']) / youtube_data['عدد المشتركين بالقناة'] * 100)
+    with open("data.txt", "w") as f:
+            f.write(result)
 
-    comments_info['date_count_list'] = date_counts_list
+    return result
+@comments_dashboard_router_experimenting.post("/GetYoutubeCommentsSingle")
+async def get_comments_analytics(request: Request,background_tasks: BackgroundTasks):
+    comments_url: dict = await request.json()
+    taskd = background_tasks.add_task(process_data, "bobob_")
+    task =background_tasks.add_task(process_youtube,comments_url=comments_url)
+    # task_result = background_tasks.get_task_result(task)
+    gsdfgsg=0
+    # background_tasks.add_task(notify_client, result)
+    iamhere=0
+    # sentiment_result = json.loads(response.text)
 
-    first_comment_timestamp=date_counts_list[0][0]/1000 # dividing by 1000 is critical
-
-    dt_object = datetime.datetime.fromtimestamp(first_comment_timestamp)
-
-    # Subtract one day
-    one_day = datetime.timedelta(days=1)
-    new_dt_object = dt_object - one_day
-
-    # Convert the datetime object back to a timestamp
-    comments_info['date_count_first_date'] = int(new_dt_object.timestamp())*1000
-    return JSONResponse(content=comments_info)
+# @comments_dashboard_router_experimenting.post("/GetYoutubeCommentsSingle")
+# async def get_comments_analytics(request: Request,background_tasks: BackgroundTasks):
+#     comments_url: dict = await request.json()
+#     # assgf = {'youtube_url': 'https://www.youtube.com/watch?v=3NnU0eY_Bbs'}
+#     url = comments_url['youtube_url']
+#     youtube_data = process_youtube_episode(comments_allowed=True, url=url)
+#     comments = youtube_data['comments']
+#     comments_lst = [cmnt['sentence'] for cmnt in comments]
+#     cmnt_obj = {'sentences': comments_lst}
+#     response = requests.post(
+#         'http://' + sentiment_service['SENTIMENT_IP'] + ':' + sentiment_service['SENTIMENT_PORT'] + '/get_sentiment',
+#         json=cmnt_obj)
+#     sentiment_result = json.loads(response.text)
+#     sentiment_stat = dict()
+#     sentiment_stat['negative_comments'] = len([sent for sent in sentiment_result if sent['sentiment'] == 'negative'])
+#     sentiment_stat['positive_comments'] = len([sent for sent in sentiment_result if sent['sentiment'] == 'positive'])
+#     sentiment_stat['neutral_comments'] = len([sent for sent in sentiment_result if sent['sentiment'] == 'neutral'])
+#
+#     sentiment_sentences = pd.DataFrame(sentiment_result)
+#     comments_df = pd.DataFrame(comments)
+#     comments_with_sentiment = pd.merge(sentiment_sentences, comments_df, on='sentence', how='inner').astype(
+#         str)
+#     comments_with_sentiment['sentence'] = comments_with_sentiment['sentence'].apply(lambda x: remove_br(x))
+#     comments_with_sentiment = comments_with_sentiment.to_dict(
+#         orient='records')
+#     date_counts = defaultdict(int)
+#
+#     for d in comments_with_sentiment:
+#         # convert ISO formatted date string to a datetime object
+#         date = datetime.datetime.fromisoformat(d['updated_at'].replace('Z', '+00:00')).date()
+#         timestamp = int(time.mktime(date.timetuple())) * 1000
+#         d['timestamp']=timestamp
+#         date_counts[timestamp] += 1
+#     # convert dictionary to a list of tuples
+#     date_counts_list = [[(date), count] for date, count in date_counts.items()]
+#     # sort list by date
+#     date_counts_list.sort()
+#
+#     clean_comments = clean_text(comments_lst)
+#     bigrams, top_bigram_series, top_bigram_tags = get_bigrams(corpus=" ".join(clean_comments), top_x=10)
+#     unigrams, top_unigram_series, top_unigram_tags = get_unigrams(corpus=" ".join(clean_comments), top_x=10)
+#     stats = dict()
+#     stats['عدد التعليقات'] = str(youtube_data['عدد التعليقات'])
+#     stats['عدد الإعجابات'] = str(youtube_data['عدد الإعجابات'])
+#     stats['عدد المشاهدات'] = str(youtube_data['عدد المشاهدات'])
+#     comments_info = dict()
+#     comments_info['unigram'] = unigrams
+#     comments_info['bigram'] = bigrams
+#     comments_info['top_unigram_series'] = top_unigram_series
+#     comments_info['top_unigram_tags'] = top_unigram_tags
+#     comments_info['top_bigram_series'] = top_bigram_series
+#     comments_info['top_bigram_tags'] = top_bigram_tags
+#     comments_info['stats'] = stats
+#     comments_info['comments_data'] = comments_with_sentiment
+#     comments_info['message'] = "successfully analyzed comments"
+#     comments_info['status'] = "success"
+#     comments_info['sentiment_stat'] = sentiment_stat
+#     comments_info = jsonable_encoder(comments_info)
+#     comments_info['engagement_metric'] = math.ceil(
+#         int(youtube_data['عدد المشاهدات']) / youtube_data['عدد المشتركين بالقناة'] * 100)
+#
+#     comments_info['date_count_list'] = date_counts_list
+#
+#     first_comment_timestamp=date_counts_list[0][0]/1000 # dividing by 1000 is critical
+#
+#     dt_object = datetime.datetime.fromtimestamp(first_comment_timestamp)
+#
+#     # Subtract one day
+#     one_day = datetime.timedelta(days=1)
+#     new_dt_object = dt_object - one_day
+#
+#     # Convert the datetime object back to a timestamp
+#     comments_info['date_count_first_date'] = int(new_dt_object.timestamp())*1000
+#     return JSONResponse(content=comments_info)

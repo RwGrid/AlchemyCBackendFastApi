@@ -5,18 +5,24 @@ from typing import List
 
 from fastapi.encoders import jsonable_encoder
 from starlette.responses import JSONResponse
+from app.connection_to_postgre import crud, schemas_sql_alchemy
 
 from app.connection_to_postgre.models import users
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Request, Cookie, APIRouter
 from sqlalchemy.orm import Session  # type: ignore
-from app.connection_to_postgre.schemas_sql_alchemy import Users
-from ..CustomClasses.typeHintMsh import SqlOpMsg
-from ..connection_to_postgre import crud
-from ..dependencies import verify_cookie
+from app.connection_to_postgre.schemas_sql_alchemy import Users, TagsOptions
+# from ..CustomClasses.typeHintMsh import SqlOpMsg
+# from ..connection_to_postgre import crud
+# from ..dependencies import verify_cookie
+from app.CustomClasses.typeHintMsh import SqlOpMsg
+from app.connection_to_postgre import crud
+from app.dependencies import verify_cookie
 from app.SessionFactory import get_db
-from ..elastic_session import ElasticSearchSingelton
-from ..send_data_to_elastic_utility import process_episode
+# from ..elastic_session import ElasticSearchSingelton
+# from ..send_data_to_elastic_utility import process_episode
+from app.elastic_session import ElasticSearchSingelton
+from app.send_data_to_elastic_utility import process_episode
 
 # the 'tags' in the router are important for-> These "tags" are especially useful for the automatic interactive
 # documentation systems
@@ -28,7 +34,13 @@ insert_episodes_router = APIRouter(
 from app.elastic_session import ELASTIC_CONFIG
 
 es = ElasticSearchSingelton().es_client
+@insert_episodes_router.post("/CreateGuestInfoDynamically")
+async def read_item(
+        guest_info: schemas_sql_alchemy.GuestsInfoC, db: Session = Depends(get_db)
+) -> SqlOpMsg:
+    sdfasdf=0
 
+    return crud.create_guest_info_dynamically(db=db, guest_info_pydantic=guest_info)
 
 @insert_episodes_router.post("/CreateEpisode")
 async def read_item(
@@ -53,6 +65,7 @@ async def read_item(
     try:
         episode_json = await request.json()
         # episode_json={'formFake': '', 'formDay': 'الاربعاء', 'formEpiTime': '2023-02-02T22:02', 'formProgramName': 'بيت القصيد', 'formEpisodeType': 'برنامج حواري', 'formMainSubject': 'ergdfgd', 'formSummary': 'dgfgdgdf', 'formMashhadSa5en': '', 'formMashhadSeyasi': '', 'formMashhadSaqafi': '', 'formMashhadOnline': '', 'formSiyasiyaMalaf1': '', 'formSiyasiyaMalaf2': '', 'formSiyasiyaMalaf3': '', 'formSiyasiyaMalaf4': '', 'formYoutubeLink': 'https://www.youtube.com/watch?v=AMNOwdnqhsM', 'formHosts': [{'value': 'مايك شلهوب', 'label': 'مايك شلهوب'}, {'value': 'أيهم بني المرجة', 'label': 'أيهم بني المرجة'}], 'formSubSubjects': ['dfgdfgfd', 'dfgdfg'], 'formEditors': [{'value': 'ali', 'label': 'ali'}], 'formGraphic': [{'value': 'ahmad', 'label': 'ahmad'}], 'formGuests': [{'GuestName': 'Rida Wazneh', 'GuestId': 37, 'GuestDesc': ['باحث في الشؤون السياسية والاستراتيجية']},{'GuestName': 'ali kheirdeen', 'GuestId': 36, 'GuestDesc': ['باحث في الشؤون السياسية والاستراتيجية']}]}
+        # episode_json={'formFake': '', 'formDay': 'الخميس', 'formProgramName': 'بيت القصيد', 'formEpisodeType': 'ثقافي', 'formSummary': 'adsf asdf sadf asdf asdf asdf asd', 'formMashhadSa5en': '', 'formMashhadSeyasi': '', 'formMashhadSaqafi': '', 'formMashhadOnline': '', 'formSiyasiyaMalaf1': '', 'formSiyasiyaMalaf2': '', 'formSiyasiyaMalaf3': '', 'formSiyasiyaMalaf4': '', 'formYoutubeLink': '', 'formHosts': [{'value': 'مايك شلهوب', 'label': 'مايك شلهوب'}], 'formSubSubjects': [], 'formEditors': None, 'formGraphic': None, 'formGuests': [{'GuestName': 'toto', 'GuestId': 50, 'GuestDesc': ['toto'], 'GuestErrors': {'guestDescRequired': ''}}, {'GuestName': 'hamada', 'GuestId': '', 'GuestDesc': ['asdfasdf'], 'GuestErrors': {'guestDescRequired': ''}}], 'formMainSubject': 'adsf asd fasd fasdf ads', 'formEpiTime': '2023-06-22T09:57:06.903Z', 'formSectionDuration': '1:50', 'formSections': [{'SectionStart': '00:00:00', 'SectionEnd': '0:25:00', 'SectionTitle': 'makta31'}, {'SectionStart': '0:25:00', 'SectionEnd': '0:50:00', 'SectionTitle': 'makta32'}, {'SectionStart': '0:50:00', 'SectionEnd': '1:50:00', 'SectionTitle': 'makta33'}], 'formTags': [{'id': 1, 'label': 'sdafsdf', 'value': 'sdafsdf'}, {'value': 'testtag2', 'label': 'testtag2'}]}
         youtube_status, preprocess_and_format_episodes_list, hash_episode = process_episode(
             episode_json
         )
@@ -66,7 +79,9 @@ async def read_item(
         if youtube_status != "success":
             token: dict = json.loads(access_token.body)
             usr = crud.get_user_by_username(db=db, user_name=token["user"])
-            crud.create_send_actions(db=db, user=usr, episode_hash=hash_episode,subject=episode_json['formMainSubject'],program_name=episode_json['formProgramName'])
+            crud.create_send_actions(db=db, user=usr, episode_hash=hash_episode,
+                                     subject=episode_json['formMainSubject'],
+                                     program_name=episode_json['formProgramName'])
         if youtube_status == "success":
             return {
                 "status": "Successfully Integrated The Episode",
@@ -76,12 +91,12 @@ async def read_item(
 
             return {
                 "status": "Successfully Integrated The Episode",
-                "youtube_status": " failed to get youtube video none",
+                "youtube_status": "success",
             }
         elif youtube_status == "failed":
             return {
                 "status": "Successfully Integrated The Episode",
-                "youtube_status": "failed to get youtube video",
+                "youtube_status": "success",
             }
 
     except Exception as err:
@@ -101,6 +116,18 @@ async def read_item(
 
     # json_compatible_item_data = jsonable_encoder({"item_id": episode_info})
     # return JSONResponse(content=json_compatible_item_data)
+
+
+@insert_episodes_router.post("/InsertTags")
+async def create_option(option: TagsOptions, db: Session = Depends(get_db)):
+    res = crud.create_tag(db, tag=option)
+    return res
+
+
+@insert_episodes_router.get("/GetTags")
+async def create_option(db: Session = Depends(get_db)):
+    tags = crud.get_tags(db)
+    return tags
 
 
 @insert_episodes_router.post("/SendTask")

@@ -1,4 +1,5 @@
-from app.connection_to_postgre.database import AlchemySession
+# from app.connection_to_postgre.database import AlchemySession
+from connection_to_postgre.database import AlchemySession
 
 """
 This is a Singelton Pattern at module level in python, see this link 

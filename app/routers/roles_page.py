@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Request, Cookie, APIRouter
 from sqlalchemy.orm import Session  # type: ignore
 from app.connection_to_postgre.schemas_sql_alchemy import Users, Roles, VisibleTabs
-from ..connection_to_postgre import crud
-from ..dependencies import verify_cookie
+from app.connection_to_postgre import crud
+from app.dependencies import verify_cookie
 from app.SessionFactory import get_db
 
 # the 'tags' in the router are important for-> These "tags" are especially useful for the automatic interactive
@@ -74,7 +74,8 @@ async def update_role(
 ):
     # I must give the newly created role , the list  of the old users
     role_object_req = await request.json()
-    crud.delete_role(db, role_id)
-    sleep(0.2)
-    crud.create_role(db, role_object_req)
+    crud.update_role(db,role_object_req,role_id)
+    # crud.delete_role(db, role_id)
+    # sleep(0.2)
+    # crud.create_role(db, role_object_req)
     return {"status": "SUCCESS", "message": "Updated Successfully"}

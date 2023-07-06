@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, Date, JSON, DateTime
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, Date, JSON, DateTime, ARRAY
 from sqlalchemy.orm import relationship
 from .database import AlchemySession
 from sqlalchemy.ext.declarative import declarative_base
@@ -7,7 +7,7 @@ ses = AlchemySession()
 Base = declarative_base(ses.engine)
 
 
-# sqlalchemy.url = postgresql://postgres:postgres_ali@127.0.0.1:5446/mayadeen
+# sqlalchemy.url = postgresql://postgres:postgres_ali@0.0.0.0:5446/mayadeen
 
 
 # THE LINK HERE IS VERY IMPORTANT
@@ -48,11 +48,16 @@ class guests_info(Base):
     __tablename__ = "guests_info"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
-    expertise_id = Column(Integer, ForeignKey('guest_expertise.id'))
+    expertise_id = Column(Integer, ForeignKey('guest_expertise.id'), nullable=True)
     image = Column(
         String,
         nullable=True,
         default="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAevUlEQVR4Xu2dC5BdRZnHvz73znvymJnMKwmS8EiiJGBCgmBwC5HdUgEphVURkfVR6q66bq2v3XIfllr7cHfVcrd8lhYCC6LlKquA7qJZEYIQMBAChAB5QDLvzCMzc+/cmbmn9/tuZsLMZCa3z50+97z+XZWaJNOnT/evu//n69fXikIa+vv1svocrR/XtF457nqlnXXk0hnaoXpFVKs1NfDPOk26MqRFQLYSQECR4iZKo0rRQOGnS6Pk0Etaufsd19nnVtKzOYf2NzaqoTDi4D4UjqC1rs/10MVE7hX5vHMFA93M/+eEI3fIBQgsjoBS6oDW7n1KOfeNj9N9y89UA4tL0c7TgQrA4GHdUFFBb+dM3EiKLuYOn7JTLKQCAuElwGKQdzXt5HZ/23iOftiwVg0GlduyC4B81XN99GZ3km4iTVezCV8VVOHxXhAImgAPIcb44/czNnW/X9VG97I4uOXMU9kEQDp+touu5XHS50jrV5WzkHgXCESCgFJP86D3n+ta6HYWgsly5Nl3AeCOn8500vt4TP8Z/vtZ5SgU3gECUSbAnf8F7i//VN1KN/stBL4KwESPvnQ8T1/nL/6mKFcI8g4CgRBw1B6Vpz+rXaUe9Ov9vgiAHtKNo6Pu3zvK+Shm8v2qOqSbBAJsAWhF7m2T9c4nlyxRPbbLbF0Ach36bTx4+Q6RbrSdWaQHAskloI7xpPn761apu2wysCYA/KWvyPW4X3Bd59P8d2vp2iws0gKB6BPQ365tdz7GlsG4jbJY6ah6UJ+VzdKd3PG32sgU0gABEFiYAHf+R1QNvbNmuTq4WE6LFoDRPr2NJuhunuhrXmxm8DwIgIApAdXPOwauql2tHjJ9Yr54ixKA7BH9BkrRT1ytlywmE3gWBEDAOwG2BEZ5R+F19SvVL7w/feKJkgUg26XfxQ",
+    )
+    image_hash = Column(
+        String,
+        nullable=True,
+        default="a53d1042509d41a22787b51ba800d4f2",
     )
     phone_number = Column(String, nullable=True)
     phone_extension = Column(String, nullable=True)
@@ -63,6 +68,14 @@ class guests_info(Base):
     expertise = relationship("guest_expertise", back_populates="guests")
     email = Column(String, nullable=True)
     country = Column(String, nullable=True)
+
+
+class options_tag_model(Base):
+    __tablename__ = "options_tag_model"
+
+    id = Column(Integer, primary_key=True, index=True)
+    label = Column(String)
+    value = Column(String)
 
 
 class guests_desc(Base):
@@ -165,41 +178,20 @@ class actions(Base):
     )
 
 
-# class users_supervisors(Base):
-#     __tablename__ = "users_supervisors"
-#     id = Column(Integer, primary_key=True, index=True)
-#     user_id = Column(Integer, ForeignKey('users.id'))
-#     supervisor_id = Column(Integer, ForeignKey('users.id'))
-#     supervisor_type = Column(String(255))  # task,or/and,monitor ---> [],monitor,
-users_supervisors = Table('users_supervisors', Base.metadata,
-                          Column('supervisor_id', Integer, ForeignKey('users.id'), primary_key=True),
-                          Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
-                          Column('supervisor_type', String(255))
-
-                          )
+class supervises_roles(Base):
+    __tablename__ = 'supervises_roles'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
+    role_supervises_id = Column(Integer, ForeignKey('roles.id', ondelete="CASCADE"))
 
 
-class users(Base):
-    """here we add episode types into our app"""
-
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    user_name = Column(String(255), index=True, unique=True)
-    user_display_name = Column(String(255))
-    user_password = Column(String, index=True)
-    roles = relationship(
-        "roles", secondary=users_roles.__table__, backref="users_roles"
-    )
-    actions = relationship(
-        "actions", secondary=users_actions.__table__, backref="users_actions"
-    )
-    supervisors = relationship("users",
-                               secondary=users_supervisors,
-                               primaryjoin=id == users_supervisors.c.user_id,
-                               secondaryjoin=id == users_supervisors.c.supervisor_id,
-                               backref="supervised_users")
-
-
+class supervises_users(Base):
+    __tablename__ = 'supervises_users'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    supervisor_id = Column(Integer, ForeignKey('users.id'))
+    supervisor_type = Column(String)
+    supervised_user = relationship('users', foreign_keys=[supervisor_id])
 class send_actions(Base):
     """here we add episode types into our app"""
 
@@ -219,21 +211,78 @@ class send_actions(Base):
     task_type = Column(String(255))  # sending_unfinished_episode_to_be_filled,#filling_an_episode
     action_body = Column(JSON, nullable=True)
     task_hash = Column(String(1000))
-    updater_id = Column(Integer, ForeignKey('users.id'))
-    updater = relationship("users", foreign_keys=[updater_id])
+    updater_id = Column(Integer)
 
+    # updater_id = Column(Integer, ForeignKey('users.id'))
+    # updater = relationship("users", foreign_keys=[updater_id])
+    def get_updater(self,db):
+        # Assuming you have a SQLAlchemy session named `session`
+        updater = db.query(users).filter(users.id == self.updater_id).first()
+        return updater
     # issued those tasks  to me
     # in the user form i must add a dropdown list on which users this new user will his actions(tasks) be transmitted to
 
 
-# Sent_Actions Table
-#
-#     id (primary key)
-#     sender_id (foreign key referencing Users table)
-#     receiver_id (foreign key referencing Users table)
-#     action_id (foreign key referencing Actions table)
-#     created_at
-#     updated_at
+class users(Base):
+    """here we add episode types into our app"""
+
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    user_name = Column(String(255), index=True, unique=True)
+    user_display_name = Column(String(255))
+    user_password = Column(String, index=True)
+    roles = relationship(
+        "roles", secondary=users_roles.__table__, backref="users_roles"
+    )
+    actions = relationship(
+        "actions", secondary=users_actions.__table__, backref="users_actions"
+    )
+    supervises_these_roles = relationship(
+        "roles", secondary=supervises_roles.__table__,
+        primaryjoin=id == supervises_roles.role_supervises_id,
+        secondaryjoin=id == supervises_roles.user_id, backref="supervised_by_roles",
+    )
+    supervisors_these = relationship('users', secondary='supervises_users',
+                                 primaryjoin=id == supervises_users.supervisor_id,
+                                 secondaryjoin=id == supervises_users.user_id,
+                                 backref='supervised_by')
+
+
+    send_actions_to = relationship('send_actions', foreign_keys=[send_actions.sender_id],
+                                          cascade="all, delete, delete-orphan")
+    sent_actions_by = relationship('send_actions', foreign_keys=[send_actions.receiver_id],
+                                      cascade="all, delete, delete-orphan")
+    supervisors_these_usrs = relationship('supervises_users', foreign_keys=[supervises_users.supervisor_id],
+                                          cascade="all, delete, delete-orphan")
+    supervised_by_usrs = relationship('supervises_users', foreign_keys=[supervises_users.user_id],
+                                      cascade="all, delete, delete-orphan")
+
+    # supervised_by_roles = relationship('supervises_roles', foreign_keys=[supervises_roles.role_supervises_id],  cascade="all, delete, delete-orphan")
+
+    # supervises = relationship('supervises', backref='supervisor_user', foreign_keys=[supervises.user_id])
+
+    def add_user_supervisor(self, user, supervisor, supervisor_type: str):
+        """
+        :param user:
+        :param supervisor: object user that is a supervisor
+        :param supervisor_type: type of supervisor, can by supervisor_by_role or supervisor_by_user
+        :param supervisor_role_name: supervisor role
+        :param supervises_these_roles:
+        :return:
+        """
+        supervision = supervises_users(user_id=user.id, supervisor_id=supervisor.id, supervisor_type=supervisor_type)
+        self.supervised_by_usrs.append(supervision)
+
+    def add_role_supervisor(self, user, supervisor_role):
+        """
+
+        :return:
+        """
+        supervision = supervises_roles(user_id=user.id, role_supervises_id=supervisor_role.id)
+        self.supervised_by_roles.append(supervision)
+
+
+
 class role_tabs_field_rules(Base):
     __tablename__ = "role_tabs_field_rules"
     id = Column(Integer, primary_key=True, index=True)
@@ -292,6 +341,18 @@ class roles(Base):
         secondary=roles_visible_tabs.__tablename__,
         backref="roles_visible_tabs",
     )
+    supervises = relationship(
+        "users",
+        secondary=supervises_roles.__tablename__,
+        backref="supervised_by_roles",
+    )
+    # supervises_rol = relationship(
+    #     "supervises_roles",
+    #     secondary=supervises_roles.__tablename__,
+    #     backref="supervises_roles",
+    #     primaryjoin="roles.id == supervises_roles.role_id",
+    #     secondaryjoin="roles.id == supervises_roles.supervisor_id"
+    # )
 
 
 class visible_tabs(Base):

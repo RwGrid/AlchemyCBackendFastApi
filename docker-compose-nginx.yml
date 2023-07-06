@@ -2,8 +2,8 @@ nginx-ssl-proxy:
   image: danieldent/nginx-ssl-proxy
   restart: always
   environment:
-    UPSTREAM: 127.0.0.1:3300
-    SERVERNAME: 127.0.0.1
+    UPSTREAM: 0.0.0.0:3300
+    SERVERNAME: 0.0.0.0
   ports:
     - "80:80"
     - "443:443"
