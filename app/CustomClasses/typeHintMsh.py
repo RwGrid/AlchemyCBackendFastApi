@@ -1,0 +1,2 @@
+class SqlOpMsg(dict):
+    pass

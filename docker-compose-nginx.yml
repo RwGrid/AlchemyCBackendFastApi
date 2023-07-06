@@ -1,0 +1,19 @@
+nginx-ssl-proxy:
+  image: danieldent/nginx-ssl-proxy
+  restart: always
+  environment:
+    UPSTREAM: 0.0.0.0:3300
+    SERVERNAME: 0.0.0.0
+  ports:
+    - "80:80"
+    - "443:443"
+  volumes:
+    - "/etc/letsencrypt"
+#https://github.com/DanielDent/docker-nginx-ssl-proxy
+# https://hub.docker.com/r/mvance/unbound
+
+# solved DNS problem issure whatever :
+
+#https://d-heinrich:
+#  medium:
+#    com/solved-dns-issues-with-systemd-resolved-service-b6cbbea16a03:
