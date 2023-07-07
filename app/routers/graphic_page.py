@@ -25,7 +25,6 @@ async def delete_graphic(
         graphic_id: int,
         db: Session = Depends(get_db)
 ):
-    # test commit 2
     return crud.delete_graphic(db=db, graphic_id=graphic_id)
 
 
