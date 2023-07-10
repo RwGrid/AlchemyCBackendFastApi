@@ -58,7 +58,6 @@ def clean_text(sentences_list):
         sentence_without_punctuation = sentence_without_punctuation.replace('</br>', '')
         sentence_without_punctuation = re.sub(r'\bbr\b', ' ', sentence_without_punctuation)
         sentence_without_punctuation_splitted = sentence_without_punctuation.split(' ')
-
         for word in sentence_without_punctuation_splitted:
             if word not in stop_words_english:
                 if word not in arabic_stop_words:
