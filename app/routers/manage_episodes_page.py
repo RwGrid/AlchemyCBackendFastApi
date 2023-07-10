@@ -44,12 +44,12 @@ def fetch_from_db_by_ids(db: Session, guest_list_postgres, editors_list_postgres
         try:
             editor_list.append(crud.get_editor_by_id(db, edtr['id']))
         except Exception as ex:
-            print("the editor is probably deleted")
+            print("the producers is probably deleted")
     for grphic in graphic_list_from_postgres:
         try:
             graphic_list.append(crud.get_graphic_by_id(db, grphic['id']))
         except Exception as ex:
-            print("the graphic person is probably deleted")
+            print("the technicals person is probably deleted")
     for gst in hosts_list_from_postgres:
         try:
             hosts_list.append(crud.get_host_by_id(db, gst['id']))

@@ -7,9 +7,6 @@ ses = AlchemySession()
 Base = declarative_base(ses.engine)
 
 
-# sqlalchemy.url = postgresql://postgres:postgres_ali@0.0.0.0:5446/mayadeen
-
-
 # THE LINK HERE IS VERY IMPORTANT
 # https://www.gormanalysis.com/blog/many-to-many-relationships-in-fastapi/
 # https://www.mariokandut.com/how-to-setup-https-ssl-in-localhost-react/
@@ -70,8 +67,8 @@ class guests_info(Base):
     country = Column(String, nullable=True)
 
 
-class options_tag_model(Base):
-    __tablename__ = "options_tag_model"
+class tags(Base):
+    __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True, index=True)
     label = Column(String)
@@ -126,6 +123,7 @@ class program_name_alchemy(Base):
     __tablename__ = "programs_name"
     id = Column(Integer, primary_key=True, index=True)
     program_name = Column(String, index=True)
+    episodes = relationship("episodes", back_populates="program")
 
 
 class episode_type_alchemy(Base):
@@ -134,20 +132,21 @@ class episode_type_alchemy(Base):
     __tablename__ = "episodes_type"
     id = Column(Integer, primary_key=True, index=True)
     episode_type = Column(String, index=True)
+    episodes = relationship("episodes", back_populates="episode_type")
 
 
-class graphic_alchemy(Base):
-    """here we add graphic into our app"""
+class technicals(Base):
+    """here we add technicals into our app"""
 
-    __tablename__ = "graphic"
+    __tablename__ = "technicals"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
 
 
-class editor_alchemy(Base):
-    """here we add graphic into our app"""
+class producers(Base):
+    """here we add technicals into our app"""
 
-    __tablename__ = "editor"
+    __tablename__ = "producers"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
 
@@ -192,6 +191,8 @@ class supervises_users(Base):
     supervisor_id = Column(Integer, ForeignKey('users.id'))
     supervisor_type = Column(String)
     supervised_user = relationship('users', foreign_keys=[supervisor_id])
+
+
 class send_actions(Base):
     """here we add episode types into our app"""
 
@@ -215,7 +216,7 @@ class send_actions(Base):
 
     # updater_id = Column(Integer, ForeignKey('users.id'))
     # updater = relationship("users", foreign_keys=[updater_id])
-    def get_updater(self,db):
+    def get_updater(self, db):
         # Assuming you have a SQLAlchemy session named `session`
         updater = db.query(users).filter(users.id == self.updater_id).first()
         return updater
@@ -243,15 +244,14 @@ class users(Base):
         secondaryjoin=id == supervises_roles.user_id, backref="supervised_by_roles",
     )
     supervisors_these = relationship('users', secondary='supervises_users',
-                                 primaryjoin=id == supervises_users.supervisor_id,
-                                 secondaryjoin=id == supervises_users.user_id,
-                                 backref='supervised_by')
-
+                                     primaryjoin=id == supervises_users.supervisor_id,
+                                     secondaryjoin=id == supervises_users.user_id,
+                                     backref='supervised_by')
 
     send_actions_to = relationship('send_actions', foreign_keys=[send_actions.sender_id],
-                                          cascade="all, delete, delete-orphan")
+                                   cascade="all, delete, delete-orphan")
     sent_actions_by = relationship('send_actions', foreign_keys=[send_actions.receiver_id],
-                                      cascade="all, delete, delete-orphan")
+                                   cascade="all, delete, delete-orphan")
     supervisors_these_usrs = relationship('supervises_users', foreign_keys=[supervises_users.supervisor_id],
                                           cascade="all, delete, delete-orphan")
     supervised_by_usrs = relationship('supervises_users', foreign_keys=[supervises_users.user_id],
@@ -280,7 +280,6 @@ class users(Base):
         """
         supervision = supervises_roles(user_id=user.id, role_supervises_id=supervisor_role.id)
         self.supervised_by_roles.append(supervision)
-
 
 
 class role_tabs_field_rules(Base):
@@ -366,3 +365,75 @@ class visible_tabs(Base):
         secondary=roles_visible_tabs.__tablename__,
         backref="visible_tabs_roles",
     )
+
+
+class episodes_hosts(Base):
+    __tablename__ = 'episodes_hosts'
+    id = Column(Integer, primary_key=True)
+    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    host_id = Column(Integer, ForeignKey('hosts.id', ondelete="CASCADE"))
+
+
+class episodes_technicals(Base):
+    __tablename__ = 'episodes_technicals'
+    id = Column(Integer, primary_key=True)
+    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    technicals_id = Column(Integer, ForeignKey('technicals.id', ondelete="CASCADE"))
+
+class episodes_producers(Base):
+    __tablename__ = 'episodes_producers'
+    id = Column(Integer, primary_key=True)
+    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    producers_id = Column(Integer, ForeignKey('producers.id', ondelete="CASCADE"))
+
+class episodes_guests(Base):
+    __tablename__ = 'episodes_guests'
+    id = Column(Integer, primary_key=True)
+    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    guest_id = Column(Integer, ForeignKey('guests_info.id', ondelete="CASCADE"))
+class episodes_tags(Base):
+    __tablename__ = 'episodes_tags'
+    id = Column(Integer, primary_key=True)
+    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    tag_id = Column(Integer, ForeignKey('tags.id', ondelete="CASCADE"))
+
+class episodes(Base):
+    __tablename__ = "episodes"
+    id = Column(Integer, primary_key=True, index=True)
+    day_of_week = Column(String)
+    episode_date = Column(String)
+    main_subject = Column(String)
+    episode_duration = Column(String)
+    summary = Column(String)
+    program_id = Column(Integer, ForeignKey('programs_name.id'))
+    program = relationship("programs_name", back_populates="episodes")
+    episode_type_id = Column(Integer, ForeignKey('episodes_type.id'))
+    episode_type = relationship("episodes_type", back_populates="episodes")
+    sections = relationship("sections", back_populates="episode")
+    hosts = relationship(
+        "hosts", secondary=episodes_hosts.__table__, backref="episodes_hosts"
+    )
+    technicals = relationship(
+        "technicals", secondary=episodes_technicals.__table__, backref="episodes_technicals"
+    )
+    producers = relationship(
+        "producers", secondary=episodes_producers.__table__, backref="episodes_producers"
+    )
+    guests = relationship(
+        "guests_info", secondary=episodes_guests.__table__, backref="episodes_guests"
+    )
+    tags = relationship(
+        "tags", secondary=episodes_tags.__table__, backref="episodes_tags"
+    )
+
+
+
+class sections(Base):
+    __tablename__ = 'sections'
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+    start = Column(String)
+    end = Column(String)
+    episode_id = Column(Integer, ForeignKey('episodes.id'))
+    episode = relationship("episodes", back_populates="sections")

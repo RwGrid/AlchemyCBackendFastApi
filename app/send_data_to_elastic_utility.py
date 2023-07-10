@@ -290,13 +290,13 @@ def process_episode(sent_json):
         editor_list_from_postgres = []
         if 'formEditors'in record:
             if record.get('formEditors', None) is not None:
-                for editor in record['formEditors']:
-                    editor_list_from_postgres.append(get_editor_by_name(db_init, editor))
+                for producers in record['formEditors']:
+                    editor_list_from_postgres.append(get_editor_by_name(db_init, producers))
         graphic_list_from_postgres = []
         if 'formGraphic'in record:
             if record.get('formGraphic', None) is not None:
-                for graphic in record['formGraphic']:
-                    graphic_list_from_postgres.append(get_graphic_by_name(db_init, graphic))
+                for technicals in record['formGraphic']:
+                    graphic_list_from_postgres.append(get_graphic_by_name(db_init, technicals))
         if 'formProgramName'in record:
             if record.get('formProgramName', None) is not None:
                 program_name_postgres = get_program_by_name(db_init, record['formProgramName'])

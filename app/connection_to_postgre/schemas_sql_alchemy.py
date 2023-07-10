@@ -364,7 +364,7 @@ class GraphicC(BaseModel):
     name: str
 
 
-class Graphic(GraphicC):
+class technicals(GraphicC):
     id: int
 
     class Config:
@@ -375,7 +375,7 @@ class EditorC(BaseModel):
     name: str
 
 
-class Editor(EditorC):
+class producers(EditorC):
     id: int
 
     class Config:

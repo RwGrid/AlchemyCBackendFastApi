@@ -1,4 +1,4 @@
-from app.connection_to_postgre.models import editor_alchemy
+from app.connection_to_postgre.models import producers
 from fastapi import Depends
 from fastapi import APIRouter
 from sqlalchemy.orm import Session  # type: ignore

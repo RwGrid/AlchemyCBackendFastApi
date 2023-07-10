@@ -13,9 +13,9 @@ from .models import (
     guest_names_alchemy,
     program_name_alchemy,
     episode_type_alchemy,
-    graphic_alchemy,
+    technicals,
     guests_info,
-    editor_alchemy,options_tag_model,supervises_users,supervises_roles
+    producers,tags,supervises_users,supervises_roles
 )
 import ujson
 import json
@@ -145,10 +145,10 @@ def get_guest_info_if_exists(db: Session, guest_name: str) -> models.guests_info
         .filter(models.guests_info.name == guest_name)
         .first()
     )
-def get_tag_if_exists(db: Session, tag_name: str) ->options_tag_model:
+def get_tag_if_exists(db: Session, tag_name: str) ->tags:
     return (
-        db.query(options_tag_model)
-        .filter(options_tag_model.value == tag_name)
+        db.query(tags)
+        .filter(tags.value == tag_name)
         .first()
     )
 
@@ -156,13 +156,13 @@ def create_tag(db:Session,tag:schemas_sql_alchemy.TagsOptions):
     if get_tag_if_exists(db=db,tag_name=tag.value):
         return {"status": "WARNING", "message": "Tag Exists"}
 
-    db_tag = options_tag_model(label=tag.label, value=tag.value)
+    db_tag = tags(label=tag.label, value=tag.value)
     db.add(db_tag)
     db.commit()
     db.refresh(db_tag)
     return {"status": "SUCCESS", "message": "New Tag Added"}
 def get_tags(db:Session,):
-    db_tags = db.query(options_tag_model).all()
+    db_tags = db.query(tags).all()
     return db_tags
 
 def create_guest_info_dynamically(
@@ -1120,119 +1120,119 @@ def delete_episode_type(db: Session, episode_type_id: int) -> SqlOpMsg:
         print(traceback.format_exc())
         print(str(ex))
 
-def get_graphic_if_exists(db: Session, graphic_name: str) -> graphic_alchemy:
+def get_graphic_if_exists(db: Session, graphic_name: str) -> technicals:
     return (
-        db.query(models.graphic_alchemy)
-        .filter(models.graphic_alchemy.name == graphic_name)
+        db.query(models.technicals)
+        .filter(models.technicals.name == graphic_name)
         .first()
     )
 def get_graphic_by_name(db: Session, graphic_name: str):
-    graphic_person=db.query(models.graphic_alchemy).filter(models.graphic_alchemy.name == graphic_name).first()
+    graphic_person=db.query(models.technicals).filter(models.technicals.name == graphic_name).first()
     grphic=graphic_person.__dict__
     grphic.pop('_sa_instance_state', None)
     return grphic
 def get_graphic_by_id(db: Session, graphic_id):
-    graphic_person=db.query(models.graphic_alchemy).filter(models.graphic_alchemy.id == graphic_id).first()
+    graphic_person=db.query(models.technicals).filter(models.technicals.id == graphic_id).first()
     grphic=graphic_person.__dict__
     grphic.pop('_sa_instance_state', None)
     return grphic
 def create_graphic(
     db: Session, graphic_pydantic: schemas_sql_alchemy.GraphicC
 ) -> SqlOpMsg:
-    db_graphic: models.graphic_alchemy = get_graphic_if_exists(
+    db_graphic: models.technicals = get_graphic_if_exists(
         db, graphic_name=graphic_pydantic.name
     )
     if db_graphic:
         return {"status": "WARNING", "message": "Record Exists"}
-    db_graphic_new = models.graphic_alchemy(
+    db_graphic_new = models.technicals(
         name=graphic_pydantic.name
     )
     db.add(db_graphic_new)
     db.commit()
     db.refresh(db_graphic_new)
-    return {"status": "SUCCESS", "message": "Inserted Graphic Successfully"}
+    return {"status": "SUCCESS", "message": "Inserted technicals Successfully"}
 
 
-def get_graphic(db: Session) -> list[models.graphic_alchemy]:
+def get_graphic(db: Session) -> list[models.technicals]:
     return (
-        db.query(models.graphic_alchemy)
-        .order_by(models.graphic_alchemy.id.desc())
+        db.query(models.technicals)
+        .order_by(models.technicals.id.desc())
         .all()
     )
 
 
 def delete_graphic(db: Session, graphic_id: int) -> SqlOpMsg:
     try:
-        graphic_person: graphic_alchemy = (
-            db.query(models.graphic_alchemy).filter_by(id=graphic_id).first()
+        graphic_person: technicals = (
+            db.query(models.technicals).filter_by(id=graphic_id).first()
         )
         if not graphic_person:
-            raise RecordDoesNotExistException("graphic  not found")
+            raise RecordDoesNotExistException("technicals  not found")
         db.delete(graphic_person)
         db.commit()
-        return {"status": "SUCCESS", "message": "Deleted Graphic Successfully"}
+        return {"status": "SUCCESS", "message": "Deleted technicals Successfully"}
     except RecordDoesNotExistException:
         print(traceback.format_exc())
-        return {"status": "FAILED", "message": "Deleting Graphic type Failed"}
+        return {"status": "FAILED", "message": "Deleting technicals type Failed"}
     except Exception as ex:
         print(traceback.format_exc())
         print(str(ex))
 
-def get_editor_if_exists(db: Session, editor_name: str) -> editor_alchemy:
+def get_editor_if_exists(db: Session, editor_name: str) -> producers:
     return (
-        db.query(models.editor_alchemy)
-        .filter(models.editor_alchemy.name == editor_name)
+        db.query(models.producers)
+        .filter(models.producers.name == editor_name)
         .first()
     )
 def get_editor_by_name(db: Session, editor_name: str)->dict:
-    editor=db.query(models.editor_alchemy).filter(models.editor_alchemy.name == editor_name).first()
-    edtor=editor.__dict__
+    producers=db.query(models.producers).filter(models.producers.name == editor_name).first()
+    edtor=producers.__dict__
     edtor.pop('_sa_instance_state', None)
     return edtor
 def get_editor_by_id(db: Session, editor_id)->dict:
-    editor=db.query(models.editor_alchemy).filter(models.editor_alchemy.id == editor_id).first()
-    edtor=editor.__dict__
+    producers=db.query(models.producers).filter(models.producers.id == editor_id).first()
+    edtor=producers.__dict__
     edtor.pop('_sa_instance_state', None)
     return edtor
 
 def create_editor(
     db: Session, editor_pydantic: schemas_sql_alchemy.EditorC
 ) -> SqlOpMsg:
-    db_editor: models.editor_alchemy = get_editor_if_exists(
+    db_editor: models.producers = get_editor_if_exists(
         db, editor_name=editor_pydantic.name
     )
     if db_editor:
         return {"status": "WARNING", "message": "Record Exists"}
-    db_editor_new = models.editor_alchemy(
+    db_editor_new = models.producers(
         name=editor_pydantic.name
     )
     db.add(db_editor_new)
     db.commit()
     db.refresh(db_editor_new)
-    return {"status": "SUCCESS", "message": "Inserted Editor Successfully"}
+    return {"status": "SUCCESS", "message": "Inserted producers Successfully"}
 
 
-def get_editor(db: Session) -> list[models.editor_alchemy]:
+def get_editor(db: Session) -> list[models.producers]:
     return (
-        db.query(models.editor_alchemy)
-        .order_by(models.editor_alchemy.id.desc())
+        db.query(models.producers)
+        .order_by(models.producers.id.desc())
         .all()
     )
 
 
 def delete_editor(db: Session, editor_id: int) -> SqlOpMsg:
     try:
-        editor_person: editor_alchemy = (
-            db.query(editor_alchemy).filter_by(id=editor_id).first()
+        editor_person: producers = (
+            db.query(producers).filter_by(id=editor_id).first()
         )
         if not editor_person:
-            raise RecordDoesNotExistException("editor  not found")
+            raise RecordDoesNotExistException("producers  not found")
         db.delete(editor_person)
         db.commit()
-        return {"status": "SUCCESS", "message": "Deleted Editor Successfully"}
+        return {"status": "SUCCESS", "message": "Deleted producers Successfully"}
     except RecordDoesNotExistException:
         print(traceback.format_exc())
-        return {"status": "FAILED", "message": "Deleting Editor type Failed"}
+        return {"status": "FAILED", "message": "Deleting producers type Failed"}
     except Exception as ex:
         print(traceback.format_exc())
         print(str(ex))

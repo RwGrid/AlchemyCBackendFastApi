@@ -1,4 +1,4 @@
-from app.connection_to_postgre.models import editor_alchemy
+from app.connection_to_postgre.models import producers
 from fastapi import Depends
 from fastapi import APIRouter
 from sqlalchemy.orm import Session  # type: ignore
@@ -7,7 +7,7 @@ from app.dependencies import verify_cookie
 from app.SessionFactory import get_db
 
 editor_router = APIRouter(
-    tags=["editor"],
+    tags=["producers"],
     dependencies=[Depends(verify_cookie)],
     responses={404: {"description": "Not found"}},
 )
@@ -15,9 +15,9 @@ editor_router = APIRouter(
 
 @editor_router.post("/CreateEditor/")
 async def create_graphic(
-        editor: schemas_sql_alchemy.EditorC,
+        producers: schemas_sql_alchemy.EditorC,
         db: Session = Depends(get_db)):
-    return crud.create_editor(db=db, editor_pydantic=editor)
+    return crud.create_editor(db=db, editor_pydantic=producers)
 
 
 @editor_router.delete("/DeleteEditor/{editor_id}")
@@ -28,9 +28,9 @@ async def delete_graphic(
     return crud.delete_editor(db=db, editor_id=editor_id)
 
 
-@editor_router.get("/GetEditor", response_model=list[schemas_sql_alchemy.Editor])
+@editor_router.get("/GetEditor", response_model=list[schemas_sql_alchemy.producers])
 async def get_graphic(
         db: Session = Depends(get_db)
 ):
-    editor_personnel: list[editor_alchemy] = crud.get_editor(db)
+    editor_personnel: list[producers] = crud.get_editor(db)
     return editor_personnel
