@@ -10,6 +10,8 @@ TODO
 
 .idea
 
+app/internal
+
 app/__pycache__
 # Ignore Alembic migration files
 alembic/versions/
