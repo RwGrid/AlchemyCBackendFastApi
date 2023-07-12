@@ -11,8 +11,8 @@ from .models import (
     role_tabs_field_rules,
     users,
     guest_names_alchemy,
-    program_name_alchemy,
-    episode_type_alchemy,
+    tbl_programs,
+    episodes_type,
     technicals,
     guests_info,
     producers,tags,supervises_users,supervises_roles
@@ -36,37 +36,37 @@ from .schemas_sql_alchemy import UsersSchema,GuestInfo,UsersSchemaRoles
 MASTER_USERNAME = "12345"
 
 
-def get_host_name_if_exists(db: Session, host_name: str) -> models.host_names_alchemy:
+def get_host_name_if_exists(db: Session, host_name: str) -> models.hosts:
     return (
-        db.query(models.host_names_alchemy)
-        .filter(models.host_names_alchemy.host_name == host_name)
+        db.query(models.hosts)
+        .filter(models.hosts.host_name == host_name)
         .first()
     )
 def get_host_by_name(db: Session, host_name):
 
-        host_by_nam=db.query(models.host_names_alchemy).filter(models.host_names_alchemy.host_name == host_name).first()
+        host_by_nam=db.query(models.hosts).filter(models.hosts.host_name == host_name).first()
         host=host_by_nam.__dict__
         host.pop('_sa_instance_state', None)
         return host
 
 def get_host_by_id(db: Session, host_id):
-    host_by_id = db.query(models.host_names_alchemy).filter(models.host_names_alchemy.id == host_id).first()
+    host_by_id = db.query(models.hosts).filter(models.hosts.id == host_id).first()
     host = host_by_id.__dict__
     host.pop('_sa_instance_state', None)
     return host
 
 
-def get_hosts(db: Session) -> list[models.host_names_alchemy]:
+def get_hosts(db: Session) -> list[models.hosts]:
     return (
-        db.query(models.host_names_alchemy)
-        .order_by(models.host_names_alchemy.id.desc())
+        db.query(models.hosts)
+        .order_by(models.hosts.id.desc())
         .all()
     )
 
 
 def delete_host(db: Session, host_id: int) -> SqlOpMsg:
     try:
-        host = db.query(models.host_names_alchemy).filter_by(id=host_id).first()
+        host = db.query(models.hosts).filter_by(id=host_id).first()
         if not host:
             raise RecordDoesNotExistException("Host not found")
         db.delete(host)
@@ -84,7 +84,7 @@ def delete_host(db: Session, host_id: int) -> SqlOpMsg:
 def create_host_names(
     db: Session, host_names_pydantic: schemas_sql_alchemy.HostsBaseC
 ) -> SqlOpMsg:
-    db_host_name = models.host_names_alchemy(host_name=host_names_pydantic.host_name)
+    db_host_name = models.hosts(host_name=host_names_pydantic.host_name)
     db.add(db_host_name)
     db.commit()
     db.refresh(db_host_name)
@@ -376,17 +376,17 @@ def delete_guest_desc(db: Session, guest_desc_id: int):
 
 def get_program_name_if_exists(db: Session, program_name: str):
     return (
-        db.query(models.program_name_alchemy)
-        .filter(models.program_name_alchemy.program_name == program_name)
+        db.query(models.tbl_programs)
+        .filter(models.tbl_programs.program_name == program_name)
         .first()
     )
 def get_program_by_name(db: Session, program_name: str):
-    program=  db.query(models.program_name_alchemy).filter(models.program_name_alchemy.program_name == program_name).first()
+    program=  db.query(models.tbl_programs).filter(models.tbl_programs.program_name == program_name).first()
     prgrm=program.__dict__.copy()
     prgrm.pop('_sa_instance_state', None)
     return prgrm
 def get_program_by_id(db: Session, program_id):
-    program=  db.query(models.program_name_alchemy).filter(models.program_name_alchemy.id == program_id).first()
+    program=  db.query(models.tbl_programs).filter(models.tbl_programs.id == program_id).first()
     prgrm=program.__dict__.copy()
     prgrm.pop('_sa_instance_state', None)
     return prgrm
@@ -1029,7 +1029,7 @@ def create_program_name(
     )
     if db_program_name:
         return {"status": "WARNING", "message": "Record Exists"}
-    db_program_name: program_name_alchemy = models.program_name_alchemy(
+    db_program_name: tbl_programs = models.tbl_programs(
         program_name=program_name_pydantic.program_name
     )
     db.add(db_program_name)
@@ -1038,14 +1038,14 @@ def create_program_name(
     return {"status": "SUCCESS", "message": "Inserted Program Successfully"}
 
 
-def get_programs_names(db: Session) -> program_name_alchemy:
-    return db.query(program_name_alchemy).order_by(program_name_alchemy.id.desc()).all()
+def get_programs_names(db: Session) -> tbl_programs:
+    return db.query(tbl_programs).order_by(tbl_programs.id.desc()).all()
 
 
 def delete_program_name(db: Session, program_id: int) -> SqlOpMsg:
     try:
-        program_name: program_name_alchemy = (
-            db.query(program_name_alchemy).filter_by(id=program_id).first()
+        program_name: tbl_programs = (
+            db.query(tbl_programs).filter_by(id=program_id).first()
         )
         if not program_name:
             raise RecordDoesNotExistException("Program not found")
@@ -1060,19 +1060,19 @@ def delete_program_name(db: Session, program_id: int) -> SqlOpMsg:
         print(str(ex))
 
 
-def get_episode_type_if_exists(db: Session, episode_type: str) -> episode_type_alchemy:
+def get_episode_type_if_exists(db: Session, episode_type: str) -> episodes_type:
     return (
-        db.query(models.episode_type_alchemy)
-        .filter(models.episode_type_alchemy.episode_type == episode_type)
+        db.query(models.episodes_type)
+        .filter(models.episodes_type.episode_type == episode_type)
         .first()
     )
 def get_episode_type_by_name(db: Session, episode_type: str):
-    episode_type_obj=db.query(models.episode_type_alchemy).filter(models.episode_type_alchemy.episode_type == episode_type).first()
+    episode_type_obj=db.query(models.episodes_type).filter(models.episodes_type.episode_type == episode_type).first()
     ep_type=episode_type_obj.__dict__
     ep_type.pop('_sa_instance_state', None)
     return ep_type
 def get_episode_type_by_id(db: Session, id):
-    episode_type_obj=db.query(models.episode_type_alchemy).filter(models.episode_type_alchemy.id == id).first()
+    episode_type_obj=db.query(models.episodes_type).filter(models.episodes_type.id == id).first()
     ep_type=episode_type_obj.__dict__
     ep_type.pop('_sa_instance_state', None)
     return ep_type
@@ -1081,12 +1081,12 @@ def get_episode_type_by_id(db: Session, id):
 def create_episode_type(
     db: Session, episode_type_pydantic: schemas_sql_alchemy.EpisodesTypeC
 ) -> SqlOpMsg:
-    db_episode_type: models.episode_type_alchemy = get_episode_type_if_exists(
+    db_episode_type: models.episodes_type = get_episode_type_if_exists(
         db, episode_type=episode_type_pydantic.episode_type
     )
     if db_episode_type:
         return {"status": "WARNING", "message": "Record Exists"}
-    db_episode_type = models.episode_type_alchemy(
+    db_episode_type = models.episodes_type(
         episode_type=episode_type_pydantic.episode_type
     )
     db.add(db_episode_type)
@@ -1095,18 +1095,18 @@ def create_episode_type(
     return {"status": "SUCCESS", "message": "Inserted Episode Successfully"}
 
 
-def get_episode_types(db: Session) -> list[models.episode_type_alchemy]:
+def get_episode_types(db: Session) -> list[models.episodes_type]:
     return (
-        db.query(models.episode_type_alchemy)
-        .order_by(models.episode_type_alchemy.id.desc())
+        db.query(models.episodes_type)
+        .order_by(models.episodes_type.id.desc())
         .all()
     )
 
 
 def delete_episode_type(db: Session, episode_type_id: int) -> SqlOpMsg:
     try:
-        episode_type: episode_type_alchemy = (
-            db.query(models.episode_type_alchemy).filter_by(id=episode_type_id).first()
+        episode_type: episodes_type = (
+            db.query(models.episodes_type).filter_by(id=episode_type_id).first()
         )
         if not episode_type:
             raise RecordDoesNotExistException("episode type not found")

@@ -1,4 +1,4 @@
-from app.connection_to_postgre.models import episode_type_alchemy
+from app.connection_to_postgre.models import episodes_type
 from fastapi import Depends
 from fastapi import APIRouter
 from sqlalchemy.orm import Session  # type: ignore
@@ -34,5 +34,5 @@ async def delete_episode_type(
 async def get_episode_types(
         db: Session = Depends(get_db)
 ):
-    episode_types: list[episode_type_alchemy] = crud.get_episode_types(db)
+    episode_types: list[episodes_type] = crud.get_episode_types(db)
     return episode_types

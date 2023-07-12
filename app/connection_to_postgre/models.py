@@ -14,7 +14,7 @@ Base = declarative_base(ses.engine)
 # https://www.youtube.com/watch?v=neT7fmZ6sDE
 # https://www.nginx.com/blog/using-free-ssltls-certificates-from-lets-encrypt-with-nginx/
 #
-class host_names_alchemy(Base):
+class hosts(Base):
     """here we add host names into our app"""
 
     __tablename__ = "hosts"
@@ -117,22 +117,22 @@ class guest_names_alchemy(Base):
 #     guest_desc = Column(String, index=True)
 
 
-class program_name_alchemy(Base):
+class tbl_programs(Base):
     """here we add program names into our app"""
 
-    __tablename__ = "programs_name"
+    __tablename__ = "tbl_programs"
     id = Column(Integer, primary_key=True, index=True)
     program_name = Column(String, index=True)
-    episodes = relationship("episodes", back_populates="program")
+    episodes = relationship("tbl_episodes", back_populates="program")
 
 
-class episode_type_alchemy(Base):
+class episodes_type(Base):
     """here we add episode types into our app"""
 
     __tablename__ = "episodes_type"
     id = Column(Integer, primary_key=True, index=True)
     episode_type = Column(String, index=True)
-    episodes = relationship("episodes", back_populates="episode_type")
+    episodes = relationship("tbl_episodes", back_populates="episode_type")
 
 
 class technicals(Base):
@@ -193,6 +193,31 @@ class supervises_users(Base):
     supervised_user = relationship('users', foreign_keys=[supervisor_id])
 
 
+class tbl_tasks(Base):
+    __tablename__ = "tbl_tasks"
+    id = Column(Integer, primary_key=True, index=True)
+    action_id = Column(Integer, ForeignKey('actions.id'))
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime, nullable=True)
+    is_rejected = Column(Boolean, default=False)  # read or unread
+    completion_status = Column(String(255))  # pending or completed
+    is_task = Column(Boolean,
+                     index=True)  # if true and receiver is current logged-in user then i can see the tasks and who
+    task_type = Column(String(255))  # sending_unfinished_episode_to_be_filled,#filling_an_episode
+    action_body = Column(JSON, nullable=True)
+    task_hash = Column(String(1000))
+    updater_id = Column(Integer)
+    # updater_id = Column(Integer, ForeignKey('users.id'))
+    # updater = relationship("users", foreign_keys=[updater_id])
+
+    def get_updater(self, db):
+        # Assuming you have a SQLAlchemy session named `session`
+        updater = db.query(users).filter(users.id == self.updater_id).first()
+        return updater
+    # issued those tasks  to me
+    # in the user form i must add a dropdown list on which users this new user will his actions(tasks) be transmitted to
+
+
 class send_actions(Base):
     """here we add episode types into our app"""
 
@@ -202,26 +227,8 @@ class send_actions(Base):
     receiver_id = Column(Integer, ForeignKey('users.id'))
     sender = relationship("users", foreign_keys=[sender_id])
     receiver = relationship("users", foreign_keys=[receiver_id])
-    action_id = Column(Integer, ForeignKey('actions.id'))
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime, nullable=True)
-    read_status = Column(String(255))  # read or unread
-    completion_status = Column(String(255))  # pending or completed
-    is_task = Column(Boolean,
-                     index=True)  # if true and receiver is current logged-in user then i can see the tasks and who
-    task_type = Column(String(255))  # sending_unfinished_episode_to_be_filled,#filling_an_episode
-    action_body = Column(JSON, nullable=True)
-    task_hash = Column(String(1000))
-    updater_id = Column(Integer)
-
-    # updater_id = Column(Integer, ForeignKey('users.id'))
-    # updater = relationship("users", foreign_keys=[updater_id])
-    def get_updater(self, db):
-        # Assuming you have a SQLAlchemy session named `session`
-        updater = db.query(users).filter(users.id == self.updater_id).first()
-        return updater
-    # issued those tasks  to me
-    # in the user form i must add a dropdown list on which users this new user will his actions(tasks) be transmitted to
+    task_id = Column(Integer, ForeignKey('tbl_tasks.id'))
+    task = relationship("tbl_tasks", foreign_keys=[task_id])
 
 
 class users(Base):
@@ -370,48 +377,53 @@ class visible_tabs(Base):
 class episodes_hosts(Base):
     __tablename__ = 'episodes_hosts'
     id = Column(Integer, primary_key=True)
-    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    episode_id = Column(Integer, ForeignKey('tbl_episodes.id', ondelete="CASCADE"))
     host_id = Column(Integer, ForeignKey('hosts.id', ondelete="CASCADE"))
 
 
 class episodes_technicals(Base):
     __tablename__ = 'episodes_technicals'
     id = Column(Integer, primary_key=True)
-    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    episode_id = Column(Integer, ForeignKey('tbl_episodes.id', ondelete="CASCADE"))
     technicals_id = Column(Integer, ForeignKey('technicals.id', ondelete="CASCADE"))
+
 
 class episodes_producers(Base):
     __tablename__ = 'episodes_producers'
     id = Column(Integer, primary_key=True)
-    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    episode_id = Column(Integer, ForeignKey('tbl_episodes.id', ondelete="CASCADE"))
     producers_id = Column(Integer, ForeignKey('producers.id', ondelete="CASCADE"))
+
 
 class episodes_guests(Base):
     __tablename__ = 'episodes_guests'
     id = Column(Integer, primary_key=True)
-    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    episode_id = Column(Integer, ForeignKey('tbl_episodes.id', ondelete="CASCADE"))
     guest_id = Column(Integer, ForeignKey('guests_info.id', ondelete="CASCADE"))
+
+
 class episodes_tags(Base):
     __tablename__ = 'episodes_tags'
     id = Column(Integer, primary_key=True)
-    episode_id = Column(Integer, ForeignKey('episodes.id', ondelete="CASCADE"))
+    episode_id = Column(Integer, ForeignKey('tbl_episodes.id', ondelete="CASCADE"))
     tag_id = Column(Integer, ForeignKey('tags.id', ondelete="CASCADE"))
 
-class episodes(Base):
-    __tablename__ = "episodes"
+
+class tbl_episodes(Base):
+    __tablename__ = "tbl_episodes"
     id = Column(Integer, primary_key=True, index=True)
     day_of_week = Column(String)
     episode_date = Column(String)
     main_subject = Column(String)
     episode_duration = Column(String)
     summary = Column(String)
-    program_id = Column(Integer, ForeignKey('programs_name.id'))
-    program = relationship("programs_name", back_populates="episodes")
+    program_id = Column(Integer, ForeignKey('tbl_programs.id'))
+    program = relationship("tbl_programs", back_populates="episodes")
     episode_type_id = Column(Integer, ForeignKey('episodes_type.id'))
     episode_type = relationship("episodes_type", back_populates="episodes")
     sections = relationship("sections", back_populates="episode")
     hosts = relationship(
-        "hosts", secondary=episodes_hosts.__table__, backref="episodes_hosts"
+        "hosts", secondary=episodes_hosts.__table__, backref="episodes"
     )
     technicals = relationship(
         "technicals", secondary=episodes_technicals.__table__, backref="episodes_technicals"
@@ -425,7 +437,9 @@ class episodes(Base):
     tags = relationship(
         "tags", secondary=episodes_tags.__table__, backref="episodes_tags"
     )
-
+    youtube_info = Column(JSON, nullable=True)
+    tiktok_info = Column(JSON, nullable=True)
+    twitter_info = Column(JSON, nullable=True)
 
 
 class sections(Base):
@@ -435,5 +449,5 @@ class sections(Base):
     title = Column(String)
     start = Column(String)
     end = Column(String)
-    episode_id = Column(Integer, ForeignKey('episodes.id'))
-    episode = relationship("episodes", back_populates="sections")
+    episode_id = Column(Integer, ForeignKey('tbl_episodes.id'))
+    episode = relationship("tbl_episodes", back_populates="sections")

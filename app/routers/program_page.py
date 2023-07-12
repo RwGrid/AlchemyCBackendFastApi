@@ -1,4 +1,4 @@
-from app.connection_to_postgre.models import program_name_alchemy
+from app.connection_to_postgre.models import tbl_programs
 from fastapi import Depends
 from fastapi import APIRouter
 from sqlalchemy.orm import Session  # type: ignore
@@ -37,5 +37,5 @@ def delete_program(program_id: int, db: Session = Depends(get_db)):
     "/GetProgramNs", response_model=list[schemas_sql_alchemy.ProgramsName]
 )
 async def get_program_names(db: Session = Depends(get_db)):
-    programs: list[program_name_alchemy] = crud.get_programs_names(db)
+    programs: list[tbl_programs] = crud.get_programs_names(db)
     return programs

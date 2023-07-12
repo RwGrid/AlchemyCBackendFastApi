@@ -1,4 +1,5 @@
-from app.connection_to_postgre.models import  host_names_alchemy
+from app.connection_to_postgre.models import  hosts
+from app.connection_to_postgre import models
 from fastapi import  Depends
 from fastapi import APIRouter
 from sqlalchemy.orm import Session  # type: ignore
@@ -23,7 +24,7 @@ async def create_host(
         host: schemas_sql_alchemy.HostsBaseC,
         db: Session = Depends(get_db),
 ):
-    db_host: host_names_alchemy = crud.get_host_name_if_exists(
+    db_host: models.hosts = crud.get_host_name_if_exists(
         db, host_name=host.host_name
     )
 
@@ -45,5 +46,5 @@ async def delete_host(host_id: int, db: Session = Depends(get_db)):
     response_model=list[schemas_sql_alchemy.Hosts],
 )
 async def get_hosts(db: Session = Depends(get_db)):
-    hosts: host_names_alchemy = crud.get_hosts(db)
+    hosts: models.hosts = crud.get_hosts(db)
     return hosts
