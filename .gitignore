@@ -1,0 +1,68 @@
+#ignore alembic config
+alembic.ini
+
+#ignore guniorn configuration
+
+gunicorn_conf.py
+
+#ignore TODO list
+TODO
+
+.idea
+
+# Ignore Alembic migration files
+alembic/versions/
+
+github_tips_and_tricks
+
+alembic
+
+all_episodes_json
+
+when_to_use_what_in_python
+
+app/images_saved
+
+app/inserted_objects
+
+# Ignore .txt files
+*.txt
+
+# after ignoring all the .txt files, here i am excluding requirements.txt from being ignored
+!/requirements.txt
+# Ignore .txt files
+*.log
+
+# Ignore .txt files
+*.png
+
+
+# Ignore .txt files
+*.mp4
+
+# Ignore .json files
+*.json
+
+# Ignore .env files
+*.env
+
+# Ignore .env files
+*.env.*
+
+*.pem
+
+#ignore all certificates and certificate authorities
+*.crt
+
+#ignore all certificates and certificate authorities
+*.key
+
+#ignore all certificates and certificate authorities
+*.xlsx
+
+#ignore all certificates and certificate authorities
+*.patch
+
+#ignore all certificates and certificate authorities
+*.sh
+
